@@ -44,6 +44,22 @@ Companion to the root `CLAUDE.md`. Conventions specific to the Node + TypeScript
 - Schema lives in `db/001_schema.sql` — runs on backend startup if tables don't exist.
 - Invariants live in the schema (FKs, UNIQUE, ENUMs, NOT NULL). The app cannot violate them by accident.
 
+## SQL naming conventions (lowercase + snake_case, always)
+
+MySQL is case-sensitive on Linux for database and table names, case-insensitive on Windows. To avoid the dev/prod trap, all database object names use lowercase + snake_case without exception:
+
+- Database: `scheduling`
+- Tables: `managers`, `technicians`, `quotes`, `jobs`, `notifications`
+- Columns: `technician_id`, `scheduled_date`, `created_at`
+- Indexes: `idx_recipient_unread`
+- Unique keys: `uniq_tech_date_slot`, `uniq_quote`
+- Foreign keys: `fk_jobs_technician_id` (if explicitly named)
+- ENUM values: lowercase with hyphens or underscores (`'09:00-11:00'`, `'job_assigned'`)
+
+Belt-and-braces: the docker-compose `mysql:8` container is configured with `lower_case_table_names=1` so any accidental uppercase identifier gets folded to lowercase at create time. This makes the dev/prod behaviour identical.
+
+**Reject any SQL that uses CamelCase or PascalCase for tables/columns.** Even if it would work locally, it breaks production on Linux.
+
 ## Validation
 
 - Zod schemas at every route boundary. Reject malformed requests with 400 + structured error envelope `{ error: 'CODE', message: '...' }`.

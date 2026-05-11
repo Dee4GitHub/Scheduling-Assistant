@@ -1,0 +1,27 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: scheduling-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: dev
+      MYSQL_DATABASE: scheduling
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: dev
+    command:
+      - --lower_case_table_names=1
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "dev", "-pdev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  mysql_data:

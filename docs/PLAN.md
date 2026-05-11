@@ -22,11 +22,20 @@ If you only have ten minutes:
 |---|---|
 | Frontend | Next.js 15 (App Router) + Material UI v6 + TypeScript |
 | Backend | Node 22 + TypeScript + Fastify + Zod |
+| API docs | OpenAPI / Swagger UI via `@fastify/swagger` + `@fastify/swagger-ui` (generated from Zod schemas — no duplication) |
 | Database | MySQL 8 |
 | Driver | `mysql2/promise` (no ORM — raw SQL with prepared statements) |
 | Tests | Vitest |
 | Local infra | Docker Compose for MySQL |
 | Editor / dev workflow | Claude Code + custom code-review skill + `frontend-design` Claude Code plugin |
+
+### Why OpenAPI / Swagger
+
+The role description says *"Build APIs that agents can actually use. Our Golang APIs need to be structured, self-documenting (OpenAPI/Swagger)."* Same expectation applies regardless of backend language.
+
+Each route declares its Zod schema for validation. `@fastify/swagger` serialises those same schemas into an OpenAPI 3 spec, so the docs are generated from the validators — no duplication, no manual sync.
+
+`/docs` serves the interactive Swagger UI. `/docs/json` serves the raw spec for tooling (clients, agents, Postman imports).
 
 ### Why Node + TypeScript, not Go
 
