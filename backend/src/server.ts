@@ -103,15 +103,25 @@ app.get(
   },
 );
 
-// Process-level crash handlers — log structured before exiting.
+// Process-level crash handlers — log structured AND flush before exiting.
+// Pino's transport is async; calling process.exit synchronously after a fatal
+// log can truncate the log itself. We flush (Pino API not on the public
+// FastifyBaseLogger surface — narrow the type at the call site), then exit
+// via setImmediate so any pending I/O drains for one tick.
+function flushAndExit(code: number): void {
+  const log = app.log as { flush?: () => void };
+  log.flush?.();
+  setImmediate(() => process.exit(code));
+}
+
 process.on("uncaughtException", (err) => {
   app.log.fatal({ err }, "uncaught exception, exiting");
-  process.exit(1);
+  flushAndExit(1);
 });
 
 process.on("unhandledRejection", (reason) => {
   app.log.fatal({ reason }, "unhandled promise rejection, exiting");
-  process.exit(1);
+  flushAndExit(1);
 });
 
 const shutdown = async (signal: string) => {
@@ -120,10 +130,10 @@ const shutdown = async (signal: string) => {
     await app.close();
     await closePool();
     app.log.info("shutdown complete");
-    process.exit(0);
+    flushAndExit(0);
   } catch (err) {
     app.log.error({ err }, "error during shutdown");
-    process.exit(1);
+    flushAndExit(1);
   }
 };
 
