@@ -1,23 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
 import { RoleStrip } from "@/components/role/RoleStrip";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 // Visible application shell wrapping every page. Three pieces:
-//   1. AppBar with a two-line wordmark: "SCHEDULING ASSISTANT" set as a
-//      tracked uppercase title, "TRADES OPS" as a thin caption beneath. The
-//      editorial pairing reads as a publication masthead rather than a
-//      product logo.
-//   2. RoleStrip — visible "Viewing as: …" indicator + dropdown to switch.
-//   3. NotificationBell — owns its own React Query subscription.
-//
-// A hairline accent rule sits below the toolbar to anchor the AppBar
-// against the page body; without it the deep teal floats and the
-// transition into the warm paper background lacks definition.
+//   1. AppBar wordmark linking back to the home / role-picker route.
+//   2. RoleStrip — "Viewing as: …" indicator + dropdown. Hidden on the
+//      home route because the page itself IS the role picker, so showing
+//      a persisted role in the header would conflict with the user
+//      identifying themselves below.
+//   3. NotificationBell — same: hidden on the home route. There is no
+//      "current viewer" yet, so a notification count for someone else
+//      would be misleading.
 
 export function AppShell({ children }: { readonly children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <AppBar
@@ -62,9 +63,9 @@ export function AppShell({ children }: { readonly children: React.ReactNode }) {
 
           <Box sx={{ flexGrow: 1 }} />
 
-          <RoleStrip />
+          {!isHome && <RoleStrip />}
 
-          <NotificationBell />
+          {!isHome && <NotificationBell />}
         </Toolbar>
       </AppBar>
 
