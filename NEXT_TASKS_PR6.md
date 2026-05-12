@@ -43,17 +43,35 @@ The placeholder-vs-label fix went in (commit `e3df509`) but the **overall typogr
 
 **Don't redo the whole design pass.** It's broadly correct (industrial-editorial, mono+sans pair, document stripes). The issue is local — the field-label size relative to placeholder size. One-file fix in `AssignJobForm.tsx` + `RolePicker.tsx` should resolve it.
 
+## Tasks completed in PR #6 so far (do NOT redo)
+
+| # | Task | Commit |
+|---|---|---|
+| 31 | Plan frontend + final docs scope | (planning, no commit) |
+| 32 | Create feature/frontend-and-readme branch | branch created from main |
+| 33 | Scaffold Next.js 15 + MUI v6 in frontend/ | `efa55bd` |
+| 34 | Type-safe API client + Zod-mirrored types + query keys | `505e61a` |
+| 35 | Manager dashboard page + AssignJobForm + RolePicker + RoleStrip dropdown | `4622da1`, `bc4ac0b`, `dd093cf`, `db98bad` |
+| 36 | Technician schedule page + ScheduleGrid + complete-job flow | `62de659` |
+| 37 | Notification bell + panel | `e3df509` (bundled with design pass) |
+| 44 | Design pass via frontend-design skill | `e3df509` |
+
+Also done in branch:
+- Acceptance test plan `docs/TEST_CASES.md` — `1ba19bd`
+- Folder regroup into shell/role/notifications/manager/technician — `167060b`
+- NEXT_TASKS_PR6.md (this file) — `6241274`
+
 ## Tasks remaining for PR #6
 
 | # | Task | Notes |
 |---|---|---|
-| **NEW** | Fix font hierarchy ugliness | Per Deepak's last message. See "Outstanding bug" above. |
+| **NEW** | Fix font hierarchy ugliness | **TOP PRIORITY.** Per Deepak's last message before /clear: "still the UI is not correct, the font sizes look very ugly". See "Outstanding bug" section above for specific fixes to try. Use the `frontend-design` skill if you go deep; self-validate via Chrome DevTools MCP. Don't redo the whole design pass — bones are right, only typography sizing needs tuning. |
 | 38 | Docker-compose frontend wiring | Add frontend service to `docker-compose.yml`, depends_on backend healthy, expose `:3000`. Dockerfile in `frontend/` if not yet present. |
-| 39 | Manual UI test against TEST_CASES.md | Walk through `docs/TEST_CASES.md` end-to-end via browser. Tick the boxes. |
+| 39 | Manual UI test against TEST_CASES.md | Walk through `docs/TEST_CASES.md` end-to-end via browser (use Chrome DevTools MCP). Tick the boxes. |
 | 40 | README.md | Single source of truth at repo root. Setup, run, test, architecture summary, trade-offs, AI/agentic notes. See `D:\Personal\Resume\AustraliaJobs\Brix\Assessment\README_NOTES.md` for accumulated content to distil. |
-| 41 | docs/ARCHITECTURE.md | Data model, conflict-prevention design, ACID rationale, completion locking. Distil from `docs/PLAN.md` + commit messages. |
-| 42 | docs/agentic-process/* | CLAUDE.md hierarchy, quick-review skill design, plan-before-execute discipline, frontend-design skill use. Multiple short MD files. |
-| 43 | Commit, push, open PR, run quick-review, merge | Final PR. Address ≥80 findings. Squash-merge. Sync local main. |
+| 41 | docs/ARCHITECTURE.md | Data model, conflict-prevention design (PR #4 schema-authoritative UNIQUE + ER_DUP_ENTRY), ACID rationale, completion row-lock (PR #5 SELECT FOR UPDATE), notification builder/writer split. Distil from `docs/PLAN.md` + commit messages. |
+| 42 | docs/agentic-process/* | CLAUDE.md hierarchy explanation, quick-review skill design (cheaper than official code-review), plan-before-execute discipline, frontend-design skill use, browser-driven self-validation pattern. Multiple short MD files matching the folder structure already referenced in docs/PLAN.md. |
+| 43 | Commit, push, open PR, run quick-review, merge | Final PR. Address ≥80 findings. Squash-merge. Sync local main. Branch already pushed at commit `6241274` — opening the PR is just `gh pr create ...`. |
 
 ## Decision context — read session_log_2026_05_11_to_12_brix_build.md for full detail
 
