@@ -10,7 +10,11 @@ import {
 } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { env, redactedEnvForLogs } from "./config.js";
-import { closePool, pingDatabase, waitForDatabase } from "./db.js";
+import { closePool, getPool, pingDatabase, waitForDatabase } from "./db.js";
+import { seedDatabase } from "./seed.js";
+import { managersRoutes } from "./routes/managers.js";
+import { techniciansRoutes } from "./routes/technicians.js";
+import { quotesRoutes } from "./routes/quotes.js";
 
 const app = Fastify({
   logger: {
@@ -67,6 +71,11 @@ await app.register(swaggerUi, {
   routePrefix: "/docs",
   uiConfig: { docExpansion: "list", deepLinking: false },
 });
+
+const pool = getPool();
+await managersRoutes(app, pool);
+await techniciansRoutes(app, pool);
+await quotesRoutes(app, pool);
 
 app.get(
   "/health",
@@ -143,6 +152,7 @@ process.on("SIGTERM", () => void shutdown("SIGTERM"));
 try {
   app.log.info({ config: redactedEnvForLogs() }, "boot configuration");
   await waitForDatabase(app.log);
+  await seedDatabase(pool, app.log);
   await app.listen({ port: env.PORT, host: "0.0.0.0" });
   app.log.info(
     {
