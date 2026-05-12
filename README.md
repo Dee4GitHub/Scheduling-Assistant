@@ -51,6 +51,16 @@ cd frontend && npm test   # 11 unit tests (Vitest + RTL + jsdom)
 
 19 tests total. Both green at the time of writing.
 
+### Reset the demo data
+
+If you exercise the assignment flow and run out of unscheduled quotes, reset the transactional data back to the post-seed state without rebuilding anything:
+
+```bash
+cd backend && npm run db:reset
+```
+
+Wipes `jobs` and `notifications`, flips every quote's status back to `unscheduled`. The managers, technicians, and quote references (Q-1042, Q-1051, ...) are preserved so you always start from the same seed. The SQL it runs lives in [`db/002_reset.sql`](db/002_reset.sql).
+
 ## Stack
 
 | Layer | Choice |
