@@ -3,6 +3,7 @@
 import { useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Box,
   Button,
   Divider,
   ListSubheader,
@@ -21,11 +22,11 @@ import { useRole, type Role } from "@/components/role/RoleContext";
 // a Menu listing all managers and all technicians; picking one updates the
 // role context and routes to the matching page.
 //
-// Owns its own queries for managers + technicians. React Query deduplicates
-// by queryKey, so when the home page or manager dashboard already loaded
-// these lists this is a cache hit. The strip never blocks layout — when
-// the names haven't resolved yet, it falls back to "Manager #1" so the
-// header doesn't jump width on first paint.
+// Visual treatment: pill-shaped button with a mono "VIEWING AS" tag set
+// against the dark teal AppBar. The tag uses the same uppercase tracked
+// pattern as the form field labels elsewhere — consistent editorial
+// vocabulary across the app. The role label is set in display weight so
+// it reads as the primary information.
 
 export function RoleStrip() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export function RoleStrip() {
   const managers = managersQuery.data ?? [];
   const technicians = techniciansQuery.data ?? [];
 
-  const displayName = resolveDisplayName(current, managers, technicians);
+  const display = resolveDisplay(current, managers, technicians);
 
   const handleOpen = (e: MouseEvent<HTMLElement>) => {
     setAnchorEl(e.currentTarget);
@@ -75,27 +76,44 @@ export function RoleStrip() {
       <Button
         onClick={handleOpen}
         color="inherit"
-        endIcon={<ArrowDropDownIcon />}
-        size="small"
+        endIcon={<ArrowDropDownIcon sx={{ color: "rgba(255,255,255,0.7)" }} />}
         sx={{
           textTransform: "none",
-          color: "rgba(255,255,255,0.95)",
-          // Subtle separation from the rest of the AppBar without screaming.
+          color: "#FFFFFF",
           borderRadius: 999,
-          px: 1.5,
-          py: 0.5,
-          "&:hover": { bgcolor: "rgba(255,255,255,0.08)" },
+          pl: 1.75,
+          pr: 1.25,
+          py: 0.75,
+          border: "1px solid rgba(255,255,255,0.18)",
+          bgcolor: "rgba(255,255,255,0.06)",
+          backdropFilter: "blur(2px)",
+          "&:hover": {
+            bgcolor: "rgba(255,255,255,0.12)",
+            borderColor: "rgba(255,255,255,0.3)",
+          },
         }}
         aria-label="Switch viewing role"
         aria-haspopup="menu"
         aria-expanded={anchorEl !== null}
       >
-        <Stack direction="row" spacing={0.75} alignItems="baseline">
-          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)" }}>
-            Viewing as:
-          </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {displayName}
+        <Stack direction="row" spacing={1.25} alignItems="center">
+          <Box
+            sx={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.62rem",
+              fontWeight: 600,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.55)",
+              borderRight: "1px solid rgba(255,255,255,0.2)",
+              pr: 1.25,
+              py: 0.25,
+            }}
+          >
+            {display.kind}
+          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+            {display.name}
           </Typography>
         </Stack>
       </Button>
@@ -108,61 +126,104 @@ export function RoleStrip() {
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         slotProps={{
           paper: {
-            sx: { minWidth: 280, maxHeight: 480 },
+            elevation: 4,
+            sx: {
+              minWidth: 300,
+              maxHeight: 480,
+              mt: 1,
+              border: "1px solid",
+              borderColor: "divider",
+            },
           },
         }}
       >
         <ListSubheader
           sx={{
             bgcolor: "background.paper",
-            lineHeight: "32px",
-            fontWeight: 600,
+            lineHeight: "28px",
+            pt: 1,
+            pb: 0.5,
             color: "text.secondary",
+            fontFamily: "var(--font-display)",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
           }}
         >
           Managers
         </ListSubheader>
         {managers.length === 0 ? (
-          <MenuItem disabled>Loading...</MenuItem>
+          <MenuItem disabled>Loading…</MenuItem>
         ) : (
           managers.map((m) => (
             <MenuItem
               key={`mgr-${m.id}`}
               onClick={() => switchTo("manager", m.id)}
               selected={current.role === "manager" && current.id === m.id}
+              sx={{
+                "&.Mui-selected": {
+                  bgcolor: "rgba(15, 76, 92, 0.08)",
+                  borderLeft: "3px solid",
+                  borderLeftColor: "primary.main",
+                  pl: "13px",
+                },
+              }}
             >
               {m.name}
             </MenuItem>
           ))
         )}
-        <Divider />
+        <Divider sx={{ my: 0.5 }} />
         <ListSubheader
           sx={{
             bgcolor: "background.paper",
-            lineHeight: "32px",
-            fontWeight: 600,
+            lineHeight: "28px",
+            pt: 1,
+            pb: 0.5,
             color: "text.secondary",
+            fontFamily: "var(--font-display)",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
           }}
         >
           Technicians
         </ListSubheader>
         {technicians.length === 0 ? (
-          <MenuItem disabled>Loading...</MenuItem>
+          <MenuItem disabled>Loading…</MenuItem>
         ) : (
           technicians.map((t) => (
             <MenuItem
               key={`tech-${t.id}`}
               onClick={() => switchTo("technician", t.id)}
               selected={current.role === "technician" && current.id === t.id}
+              sx={{
+                "&.Mui-selected": {
+                  bgcolor: "rgba(15, 76, 92, 0.08)",
+                  borderLeft: "3px solid",
+                  borderLeftColor: "primary.main",
+                  pl: "13px",
+                },
+              }}
             >
-              {t.name}
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{ color: "text.secondary", ml: 1 }}
-              >
-                ({t.trade})
-              </Typography>
+              <Stack direction="row" alignItems="baseline" spacing={1} sx={{ flexGrow: 1 }}>
+                <Typography component="span" sx={{ fontWeight: 500 }}>
+                  {t.name}
+                </Typography>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.7rem",
+                    color: "text.secondary",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {t.trade.toUpperCase()}
+                </Typography>
+              </Stack>
             </MenuItem>
           ))
         )}
@@ -171,19 +232,23 @@ export function RoleStrip() {
   );
 }
 
-// Resolve "Manager - Aisha Khan" from { role: 'manager', id: 1 } given the
-// loaded list. Falls back to "Manager #1" while the list is still loading
-// (or if the id is somehow not in the list — e.g. user manually edited
-// localStorage). The fallback keeps layout width stable on first paint.
-function resolveDisplayName(
+interface RoleDisplay {
+  kind: "Manager" | "Tech";
+  name: string;
+}
+
+// Resolve { kind: 'Manager', name: 'Aisha Khan' } from the role context plus
+// the loaded lists. Fallback names ("Manager #1") keep header width stable
+// before the lists hydrate.
+function resolveDisplay(
   current: { role: Role; id: number },
   managers: ReadonlyArray<{ id: number; name: string }>,
   technicians: ReadonlyArray<{ id: number; name: string }>,
-): string {
+): RoleDisplay {
   if (current.role === "manager") {
     const m = managers.find((x) => x.id === current.id);
-    return m ? `Manager - ${m.name}` : `Manager #${current.id}`;
+    return { kind: "Manager", name: m ? m.name : `#${current.id}` };
   }
   const t = technicians.find((x) => x.id === current.id);
-  return t ? `Technician - ${t.name}` : `Technician #${current.id}`;
+  return { kind: "Tech", name: t ? t.name : `#${current.id}` };
 }

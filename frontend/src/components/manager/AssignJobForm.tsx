@@ -7,12 +7,13 @@ import {
   Button,
   CircularProgress,
   FormControl,
-  InputLabel,
   MenuItem,
   Select,
   Stack,
+  Typography,
   type SelectChangeEvent,
 } from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
@@ -170,111 +171,209 @@ export function AssignJobForm({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enAU}>
-      <Stack component="form" spacing={2.5} onSubmit={handleSubmit} noValidate>
+      <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate>
         {errorAlert}
 
-        <FormControl fullWidth>
-          <InputLabel id="technician-label">Technician</InputLabel>
-          <Select<DraftId>
-            labelId="technician-label"
-            id="technician"
-            value={draft.technicianId}
-            label="Technician"
-            onChange={updateIdField("technicianId")}
-            inputProps={{ name: "technicianId" }}
-            disabled={submitting}
-          >
-            {technicians.map((t) => (
-              <MenuItem key={t.id} value={t.id}>
-                {t.name} - {t.trade}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth>
-          <InputLabel id="quote-label">Quote</InputLabel>
-          <Select<DraftId>
-            labelId="quote-label"
-            id="quote"
-            value={effectiveQuoteId}
-            label="Quote"
-            onChange={updateIdField("quoteId")}
-            inputProps={{ name: "quoteId" }}
-            disabled={submitting || quotes.length === 0}
-          >
-            {quotes.length === 0 ? (
-              <MenuItem value="" disabled>
-                No unscheduled quotes available
-              </MenuItem>
-            ) : (
-              quotes.map((q) => (
-                <MenuItem key={q.id} value={q.id}>
-                  {q.reference} - {q.summary}
-                </MenuItem>
-              ))
-            )}
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth>
-          <InputLabel id="manager-label">Assigned by (Manager)</InputLabel>
-          <Select<DraftId>
-            labelId="manager-label"
-            id="manager"
-            value={draft.managerId}
-            label="Assigned by (Manager)"
-            onChange={updateIdField("managerId")}
-            inputProps={{ name: "managerId" }}
-            disabled={submitting}
-          >
-            {managers.map((m) => (
-              <MenuItem key={m.id} value={m.id}>
-                {m.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-          <DatePicker
-            label="Scheduled date"
-            value={draft.scheduledDate}
-            onChange={updateDate}
-            disabled={submitting}
-            // Backend's regex accepts any YYYY-MM-DD; the UI restricts to
-            // today-or-later to match the business rule that you don't
-            // schedule a job in the past. Backend will accept past dates
-            // — this is a UX guardrail, not a security boundary.
-            minDate={new Date()}
-            slotProps={{ textField: { fullWidth: true } }}
-          />
-
+        <FieldBlock tag="A" label="Technician" labelId="technician-label">
           <FormControl fullWidth>
-            <InputLabel id="slot-label">Time slot</InputLabel>
-            <Select<DraftSlot>
-              labelId="slot-label"
-              id="slot"
-              value={draft.slot}
-              label="Time slot"
-              onChange={updateSlot}
-              inputProps={{ name: "slot" }}
+            <Select<DraftId>
+              id="technician"
+              value={draft.technicianId}
+              displayEmpty
+              renderValue={(value) =>
+                value === "" ? (
+                  <PlaceholderText>Select a technician</PlaceholderText>
+                ) : (
+                  renderTechnicianOption(value, technicians)
+                )
+              }
+              onChange={updateIdField("technicianId")}
+              inputProps={{ name: "technicianId", "aria-labelledby": "technician-label" }}
               disabled={submitting}
             >
-              {SLOTS.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {formatSlot(s)}
+              {technicians.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  <Stack direction="row" alignItems="baseline" spacing={1.25}>
+                    <Typography component="span" sx={{ fontWeight: 500 }}>
+                      {t.name}
+                    </Typography>
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.72rem",
+                        color: "text.secondary",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {t.trade.toUpperCase()}
+                    </Typography>
+                  </Stack>
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+        </FieldBlock>
+
+        <FieldBlock
+          tag="B"
+          label="Quote"
+          labelId="quote-label"
+          hint={quotes.length === 0 ? "All quotes scheduled" : undefined}
+        >
+          <FormControl fullWidth>
+            <Select<DraftId>
+              id="quote"
+              value={effectiveQuoteId}
+              displayEmpty
+              renderValue={(value) =>
+                value === "" ? (
+                  <PlaceholderText>
+                    {quotes.length === 0
+                      ? "No unscheduled quotes"
+                      : "Select an unscheduled quote"}
+                  </PlaceholderText>
+                ) : (
+                  renderQuoteOption(value, quotes)
+                )
+              }
+              onChange={updateIdField("quoteId")}
+              inputProps={{ name: "quoteId", "aria-labelledby": "quote-label" }}
+              disabled={submitting || quotes.length === 0}
+            >
+              {quotes.length === 0 ? (
+                <MenuItem value="" disabled>
+                  No unscheduled quotes available
+                </MenuItem>
+              ) : (
+                quotes.map((q) => (
+                  <MenuItem key={q.id} value={q.id}>
+                    <Stack direction="row" alignItems="baseline" spacing={1.25}>
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "0.78rem",
+                          fontWeight: 600,
+                          color: "primary.main",
+                          letterSpacing: "0.02em",
+                        }}
+                      >
+                        {q.reference}
+                      </Typography>
+                      <Typography component="span" sx={{ color: "text.secondary" }}>
+                        {q.summary}
+                      </Typography>
+                    </Stack>
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+          </FormControl>
+        </FieldBlock>
+
+        <FieldBlock tag="C" label="Assigned by" labelId="manager-label">
+          <FormControl fullWidth>
+            <Select<DraftId>
+              id="manager"
+              value={draft.managerId}
+              displayEmpty
+              renderValue={(value) =>
+                value === "" ? (
+                  <PlaceholderText>Select a manager</PlaceholderText>
+                ) : (
+                  renderManagerOption(value, managers)
+                )
+              }
+              onChange={updateIdField("managerId")}
+              inputProps={{ name: "managerId", "aria-labelledby": "manager-label" }}
+              disabled={submitting}
+            >
+              {managers.map((m) => (
+                <MenuItem key={m.id} value={m.id}>
+                  {m.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </FieldBlock>
+
+        <Box sx={{ display: "flex", gap: 3, flexDirection: { xs: "column", sm: "row" } }}>
+          <FieldBlock tag="D" label="Scheduled date" labelId="date-label" sx={{ flex: 1 }}>
+            <DatePicker
+              value={draft.scheduledDate}
+              onChange={updateDate}
+              disabled={submitting}
+              // Backend's regex accepts any YYYY-MM-DD; the UI restricts to
+              // today-or-later to match the business rule that you don't
+              // schedule a job in the past. Backend will accept past dates
+              // — this is a UX guardrail, not a security boundary.
+              minDate={new Date()}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  placeholder: "DD/MM/YYYY",
+                  // The visible field label was suppressed (replaced by the
+                  // FieldBlock overline); add aria-labelledby so screen
+                  // readers still announce it.
+                  inputProps: { "aria-labelledby": "date-label" },
+                },
+              }}
+            />
+          </FieldBlock>
+
+          <FieldBlock tag="E" label="Time slot" labelId="slot-label" sx={{ flex: 1 }}>
+            <FormControl fullWidth>
+              <Select<DraftSlot>
+                id="slot"
+                value={draft.slot}
+                displayEmpty
+                renderValue={(value) =>
+                  value === "" ? (
+                    <PlaceholderText>Select a 2-hour slot</PlaceholderText>
+                  ) : (
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.9rem",
+                        fontWeight: 500,
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      {formatSlot(value as Slot)}
+                    </Typography>
+                  )
+                }
+                onChange={updateSlot}
+                inputProps={{ name: "slot", "aria-labelledby": "slot-label" }}
+                disabled={submitting}
+              >
+                {SLOTS.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.85rem",
+                        fontWeight: 500,
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      {formatSlot(s)}
+                    </Typography>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </FieldBlock>
         </Box>
 
         <Stack
           direction={{ xs: "column-reverse", sm: "row" }}
           spacing={1.5}
           justifyContent="flex-end"
-          sx={{ pt: 1 }}
+          sx={{ borderTop: 1, borderColor: "divider", mt: 1, pt: 3 }}
         >
           <Button
             type="button"
@@ -290,9 +389,15 @@ export function AssignJobForm({
             variant="contained"
             size="large"
             disabled={!isComplete || submitting}
-            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
+            startIcon={
+              submitting ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <SendIcon fontSize="small" />
+              )
+            }
           >
-            {submitting ? "Assigning..." : "Assign job"}
+            {submitting ? "Assigning…" : "Assign job"}
           </Button>
         </Stack>
       </Stack>
@@ -380,3 +485,148 @@ function describeError(err: ApiError): {
 // Re-export parseISO so the route handler can format the dates it gets back
 // without importing date-fns directly (keeps the dependency narrow to here).
 export { parseISO };
+
+// Tabular field block: tag letter ("A", "B"...) + UPPERCASE label + optional
+// hint + the actual input. The tag letters turn the form into a sequential
+// document. Same vocabulary as the home page RolePicker.
+//
+// The overline label gets an id so the matching Select can reference it via
+// aria-labelledby — preserves screen-reader accessibility after we removed
+// the inline MUI InputLabel (which used to double-label the field).
+function FieldBlock({
+  tag,
+  label,
+  labelId,
+  hint,
+  children,
+  sx,
+}: {
+  readonly tag: string;
+  readonly label: string;
+  readonly labelId?: string;
+  readonly hint?: string;
+  readonly children: React.ReactNode;
+  readonly sx?: object;
+}) {
+  return (
+    <Box sx={sx}>
+      <Stack direction="row" spacing={1.5} alignItems="baseline" sx={{ mb: 1 }}>
+        <Typography
+          component="span"
+          sx={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.7rem",
+            fontWeight: 600,
+            color: "secondary.main",
+            letterSpacing: "0.12em",
+          }}
+        >
+          {tag}
+        </Typography>
+        <Typography
+          id={labelId}
+          variant="overline"
+          sx={{ color: "text.primary" }}
+        >
+          {label}
+        </Typography>
+        {hint ? (
+          <Typography
+            variant="caption"
+            sx={{ color: "text.disabled", ml: "auto", letterSpacing: 0 }}
+          >
+            {hint}
+          </Typography>
+        ) : null}
+      </Stack>
+      {children}
+    </Box>
+  );
+}
+
+// Muted placeholder text rendered inside a Select when no option is picked.
+// The colour matches MUI's text.disabled so it reads as a hint, not as data.
+function PlaceholderText({ children }: { readonly children: React.ReactNode }) {
+  return (
+    <Typography
+      component="span"
+      sx={{ color: "text.disabled", fontWeight: 400 }}
+    >
+      {children}
+    </Typography>
+  );
+}
+
+// Render functions for the Select's collapsed-state value. They mirror the
+// open-list MenuItem rendering so the typography stays consistent — a
+// reference rendered in mono primary teal in the list still reads in mono
+// primary teal when selected.
+function renderTechnicianOption(
+  value: DraftId,
+  technicians: readonly Technician[],
+): React.ReactNode {
+  const t = technicians.find((x) => x.id === value);
+  if (!t) return null;
+  return (
+    <Stack direction="row" alignItems="baseline" spacing={1.25}>
+      <Typography component="span" sx={{ fontWeight: 500 }}>
+        {t.name}
+      </Typography>
+      <Typography
+        component="span"
+        sx={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.72rem",
+          color: "text.secondary",
+          letterSpacing: "0.04em",
+        }}
+      >
+        {t.trade.toUpperCase()}
+      </Typography>
+    </Stack>
+  );
+}
+
+function renderQuoteOption(
+  value: DraftId,
+  quotes: readonly Quote[],
+): React.ReactNode {
+  const q = quotes.find((x) => x.id === value);
+  if (!q) return null;
+  return (
+    <Stack direction="row" alignItems="baseline" spacing={1.25}>
+      <Typography
+        component="span"
+        sx={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.78rem",
+          fontWeight: 600,
+          color: "primary.main",
+          letterSpacing: "0.02em",
+        }}
+      >
+        {q.reference}
+      </Typography>
+      <Typography
+        component="span"
+        sx={{
+          color: "text.secondary",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {q.summary}
+      </Typography>
+    </Stack>
+  );
+}
+
+function renderManagerOption(
+  value: DraftId,
+  managers: readonly Manager[],
+): React.ReactNode {
+  const m = managers.find((x) => x.id === value);
+  if (!m) return null;
+  return <Typography component="span">{m.name}</Typography>;
+}

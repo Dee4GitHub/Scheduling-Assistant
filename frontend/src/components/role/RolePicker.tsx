@@ -8,12 +8,13 @@ import {
   Button,
   CircularProgress,
   FormControl,
-  InputLabel,
   MenuItem,
   Select,
   Stack,
+  Typography,
   type SelectChangeEvent,
 } from "@mui/material";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useQuery } from "@tanstack/react-query";
 import { listManagers, listTechnicians, ApiError } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
@@ -60,7 +61,7 @@ export function RolePicker() {
       : role === "technician"
         ? (techniciansQuery.data ?? []).map((t) => ({
             value: t.id,
-            label: `${t.name} - ${t.trade}`,
+            label: `${t.name} · ${t.trade}`,
           }))
         : [];
 
@@ -93,7 +94,7 @@ export function RolePicker() {
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-        <CircularProgress size={32} />
+        <CircularProgress size={28} />
       </Box>
     );
   }
@@ -125,51 +126,68 @@ export function RolePicker() {
   }
 
   return (
-    <Stack component="form" spacing={2.5} onSubmit={handleSubmit} noValidate>
-      <FormControl fullWidth>
-        <InputLabel id="role-label">Role</InputLabel>
-        <Select<DraftRole>
-          labelId="role-label"
-          id="role"
-          value={role}
-          label="Role"
-          onChange={handleRoleChange}
-          inputProps={{ name: "role" }}
-        >
-          <MenuItem value="manager">Manager</MenuItem>
-          <MenuItem value="technician">Technician</MenuItem>
-        </Select>
-      </FormControl>
+    <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate>
+      <FieldBlock label="Role" labelId="role-label" tag="01">
+        <FormControl fullWidth size="medium">
+          <Select<DraftRole>
+            id="role"
+            value={role}
+            displayEmpty
+            renderValue={(value) =>
+              value === "" ? (
+                <Typography component="span" sx={{ color: "text.disabled" }}>
+                  Manager or Technician?
+                </Typography>
+              ) : value === "manager" ? (
+                <Typography component="span">Manager</Typography>
+              ) : (
+                <Typography component="span">Technician</Typography>
+              )
+            }
+            onChange={handleRoleChange}
+            inputProps={{ name: "role", "aria-labelledby": "role-label" }}
+          >
+            <MenuItem value="manager">Manager</MenuItem>
+            <MenuItem value="technician">Technician</MenuItem>
+          </Select>
+        </FormControl>
+      </FieldBlock>
 
-      <FormControl fullWidth disabled={role === ""}>
-        <InputLabel id="user-label">
-          {role === "manager"
-            ? "Manager"
-            : role === "technician"
-              ? "Technician"
-              : "User"}
-        </InputLabel>
-        <Select<DraftId>
-          labelId="user-label"
-          id="user"
-          value={id}
-          label={
-            role === "manager"
-              ? "Manager"
-              : role === "technician"
-                ? "Technician"
-                : "User"
-          }
-          onChange={handleIdChange}
-          inputProps={{ name: "user" }}
-        >
-          {userOptions.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <FieldBlock
+        label={role === "manager" ? "Manager" : role === "technician" ? "Technician" : "User"}
+        labelId="user-label"
+        tag="02"
+        hint={role === "" ? "Pick a role first" : undefined}
+      >
+        <FormControl fullWidth disabled={role === ""} size="medium">
+          <Select<DraftId>
+            id="user"
+            value={id}
+            displayEmpty
+            renderValue={(value) =>
+              value === "" ? (
+                <Typography component="span" sx={{ color: "text.disabled" }}>
+                  {role === ""
+                    ? "Pick a role first"
+                    : role === "manager"
+                      ? "Select a manager"
+                      : "Select a technician"}
+                </Typography>
+              ) : (
+                renderUserOption(value, userOptions)
+              )
+            }
+            onChange={handleIdChange}
+            inputProps={{ name: "user", "aria-labelledby": "user-label" }}
+          >
+            {userOptions.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </FieldBlock>
 
       <Stack
         direction={{ xs: "column-reverse", sm: "row" }}
@@ -182,10 +200,76 @@ export function RolePicker() {
           variant="contained"
           size="large"
           disabled={!isComplete}
+          endIcon={<ArrowForwardIcon />}
         >
           Continue
         </Button>
       </Stack>
     </Stack>
   );
+}
+
+// Tabular field block: tag (mono "01", "02") + UPPERCASE label + optional hint
+// + the actual input. The tag numbers turn the form into a sequential
+// document, which reads more deliberately than a stack of unlabelled selects.
+// labelId is referenced by the wrapped Select via aria-labelledby — preserves
+// screen-reader accessibility after we removed MUI's floating InputLabel.
+function FieldBlock({
+  label,
+  labelId,
+  tag,
+  hint,
+  children,
+}: {
+  readonly label: string;
+  readonly labelId: string;
+  readonly tag: string;
+  readonly hint?: string;
+  readonly children: React.ReactNode;
+}) {
+  return (
+    <Box>
+      <Stack direction="row" spacing={1.5} alignItems="baseline" sx={{ mb: 1 }}>
+        <Typography
+          component="span"
+          sx={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.7rem",
+            fontWeight: 600,
+            color: "secondary.main",
+            letterSpacing: "0.1em",
+          }}
+        >
+          {tag}
+        </Typography>
+        <Typography
+          id={labelId}
+          variant="overline"
+          sx={{ color: "text.primary" }}
+        >
+          {label}
+        </Typography>
+        {hint ? (
+          <Typography
+            variant="caption"
+            sx={{ color: "text.disabled", ml: "auto", letterSpacing: 0 }}
+          >
+            {hint}
+          </Typography>
+        ) : null}
+      </Stack>
+      {children}
+    </Box>
+  );
+}
+
+// Render the collapsed-state value for the User select. Looks up the option
+// label so the selected display matches what the user saw in the list.
+function renderUserOption(
+  value: DraftId,
+  options: ReadonlyArray<{ value: number; label: string }>,
+): React.ReactNode {
+  const opt = options.find((o) => o.value === value);
+  if (!opt) return null;
+  return <Typography component="span">{opt.label}</Typography>;
 }

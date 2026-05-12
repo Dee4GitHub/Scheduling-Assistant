@@ -143,9 +143,6 @@ export default function TechnicianSchedulePage() {
   }
 
   const technician = (techniciansQuery.data ?? []).find((t) => t.id === technicianId);
-  const technicianLabel = technician
-    ? `${technician.name} (${technician.trade})`
-    : `Technician #${technicianId}`;
 
   // Authorisation: only the technician viewing their own page sees Mark
   // complete buttons. Managers can browse; the buttons disappear for
@@ -158,33 +155,89 @@ export default function TechnicianSchedulePage() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enAU}>
-      <Stack spacing={3}>
+      <Stack spacing={4}>
         <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 0.5 }}>
-            {technicianLabel}
+          <Typography
+            variant="overline"
+            sx={{
+              display: "block",
+              color: "secondary.main",
+              mb: 1.5,
+              fontFamily: "var(--font-mono)",
+              letterSpacing: "0.22em",
+            }}
+          >
+            {canComplete ? "Technician · My Schedule" : "Technician · Read-only View"}
           </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
+          <Typography
+            component="h1"
+            variant="h4"
+            sx={{ fontWeight: 700, mb: 1.5, color: "text.primary" }}
+          >
+            {technician ? technician.name : `Technician #${technicianId}`}
+            {technician ? (
+              <Typography
+                component="span"
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.95rem",
+                  fontWeight: 500,
+                  color: "text.secondary",
+                  ml: 1.5,
+                  letterSpacing: "0.04em",
+                  verticalAlign: "middle",
+                }}
+              >
+                {technician.trade.toUpperCase()}
+              </Typography>
+            ) : null}
+          </Typography>
+          <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 640 }}>
             {canComplete
-              ? "Your schedule. Click \"Mark complete\" when a job is done."
-              : "Viewing this technician's schedule. Only the assigned technician can mark a job complete."}
+              ? "Four two-hour slots per day. Click Mark complete when a job is done — the assigning manager is notified."
+              : "Four two-hour slots per day. Only the assigned technician can mark a job complete."}
           </Typography>
         </Box>
 
-        <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 2.5, sm: 3.5 },
+            borderColor: "divider",
+            position: "relative",
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: 3,
+              bgcolor: "primary.main",
+              borderTopLeftRadius: "inherit",
+              borderBottomLeftRadius: "inherit",
+            },
+          }}
+        >
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={2}
-            alignItems={{ xs: "stretch", sm: "center" }}
-            sx={{ mb: 2 }}
+            alignItems={{ xs: "stretch", sm: "flex-end" }}
+            justifyContent="space-between"
+            sx={{ mb: 3 }}
           >
-            <DatePicker
-              label="Date"
-              value={date}
-              onChange={(d) => {
-                if (d !== null) setDate(d);
-              }}
-              slotProps={{ textField: { size: "small", sx: { minWidth: 200 } } }}
-            />
+            <Box>
+              <Typography variant="overline" sx={{ color: "text.primary", mb: 0.5, display: "block" }}>
+                Date
+              </Typography>
+              <DatePicker
+                label="Date"
+                value={date}
+                onChange={(d) => {
+                  if (d !== null) setDate(d);
+                }}
+                slotProps={{ textField: { size: "small", sx: { minWidth: 220 } } }}
+              />
+            </Box>
           </Stack>
 
           {isLoading ? (

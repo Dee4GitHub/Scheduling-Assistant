@@ -11,7 +11,8 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 import { format, parseISO } from "date-fns";
 import type { ScheduledJob, Slot } from "@/lib/types";
 import { SLOTS } from "@/lib/types";
@@ -23,8 +24,13 @@ import { ApiError } from "@/lib/api";
 // CLAUDE.md compliance: no fetching, no API calls — owns nothing beyond
 // the props it's given.
 //
-// Date display uses dd/MM/yyyy per the AU convention; the underlying job
-// dates remain ISO over the wire.
+// Visual treatment: work-order document. The slot time is the visual
+// anchor — large monospaced numerals in a fixed-width gutter on the left.
+// Status is signalled by a 3px left-edge stripe (primary teal for
+// scheduled, success green for completed, neutral grey for available)
+// — the same document-motif stripe used on the home page card and the
+// manager dashboard. Available slots are dim and recessed so the
+// scheduled rows command attention.
 
 interface ScheduleGridProps {
   readonly date: Date;
@@ -43,9 +49,6 @@ export function ScheduleGrid({
   lastError,
   onComplete,
 }: ScheduleGridProps) {
-  // Build a lookup so SLOTS.map() can pluck the matching job O(1) — the
-  // alternative is 4 .find() calls in render, which is fine at this scale
-  // but the map reads more clearly when the row count grows.
   const jobBySlot = new Map<Slot, ScheduledJob>();
   for (const job of jobs) {
     jobBySlot.set(job.slot, job);
@@ -53,16 +56,63 @@ export function ScheduleGrid({
 
   const errorAlert = lastError !== null ? <CompleteErrorAlert err={lastError} /> : null;
 
+  const scheduledCount = jobs.filter((j) => j.status === "scheduled").length;
+  const completedCount = jobs.filter((j) => j.status === "completed").length;
+
   return (
-    <Stack spacing={2}>
-      <Box>
-        <Typography variant="overline" sx={{ color: "text.secondary" }}>
-          Schedule for
-        </Typography>
-        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-          {format(date, "EEEE, d MMMM yyyy")}
-        </Typography>
-      </Box>
+    <Stack spacing={2.5}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "flex-end" }}
+        justifyContent="space-between"
+        spacing={1.5}
+      >
+        <Box>
+          <Typography
+            variant="overline"
+            sx={{ color: "text.secondary", display: "block" }}
+          >
+            Schedule for
+          </Typography>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ fontWeight: 700, letterSpacing: "-0.015em" }}
+          >
+            {format(date, "EEEE, d MMMM yyyy")}
+          </Typography>
+        </Box>
+
+        <Stack
+          direction="row"
+          spacing={2.5}
+          sx={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.75rem",
+            color: "text.secondary",
+            letterSpacing: "0.04em",
+          }}
+        >
+          <Box>
+            <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>
+              {scheduledCount}
+            </Box>
+            {" SCHEDULED"}
+          </Box>
+          <Box>
+            <Box component="span" sx={{ color: "success.main", fontWeight: 600 }}>
+              {completedCount}
+            </Box>
+            {" DONE"}
+          </Box>
+          <Box>
+            <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>
+              {SLOTS.length - scheduledCount - completedCount}
+            </Box>
+            {" OPEN"}
+          </Box>
+        </Stack>
+      </Stack>
 
       {errorAlert}
 
@@ -90,13 +140,40 @@ export function ScheduleGrid({
 
 function AvailableSlotRow({ slot }: { readonly slot: Slot }) {
   return (
-    <Card variant="outlined" sx={{ bgcolor: "background.default" }}>
-      <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <SlotLabel slot={slot} />
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Available
-          </Typography>
+    <Card
+      variant="outlined"
+      sx={{
+        bgcolor: "rgba(15, 76, 92, 0.015)",
+        borderColor: "divider",
+        borderStyle: "dashed",
+        position: "relative",
+        overflow: "hidden",
+        // Left-edge status stripe: neutral muted grey for "open" slots.
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: 0,
+          width: 3,
+          bgcolor: "rgba(15, 76, 92, 0.18)",
+        },
+      }}
+    >
+      <CardContent sx={{ py: 2, "&:last-child": { pb: 2 }, pl: 3 }}>
+        <Stack direction="row" alignItems="center" spacing={2.5}>
+          <SlotLabel slot={slot} muted />
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <ScheduleIcon
+              sx={{ fontSize: 14, color: "text.disabled" }}
+            />
+            <Typography
+              variant="overline"
+              sx={{ color: "text.disabled", letterSpacing: "0.14em" }}
+            >
+              Open
+            </Typography>
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
@@ -122,45 +199,133 @@ function AssignedSlotRow({
     <Card
       variant="outlined"
       sx={{
-        // Subtle visual lift for assigned vs available rows.
         bgcolor: "background.paper",
-        borderColor: isCompleted ? "success.light" : "primary.light",
+        borderColor: "divider",
+        position: "relative",
+        overflow: "hidden",
+        transition: "box-shadow 150ms ease, transform 150ms ease",
+        // Status stripe: success green for completed, primary teal for
+        // active. Wider than the available-stripe (4px vs 3px) so
+        // scheduled rows have more visual weight.
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: 0,
+          width: 4,
+          bgcolor: isCompleted ? "success.main" : "primary.main",
+        },
+        "&:hover": {
+          boxShadow: isCompleted
+            ? "0 1px 3px rgba(21, 128, 61, 0.12)"
+            : "0 2px 8px rgba(15, 76, 92, 0.12)",
+        },
       }}
     >
-      <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+      <CardContent sx={{ py: 2, "&:last-child": { pb: 2 }, pl: 3 }}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
           alignItems={{ xs: "stretch", sm: "center" }}
-          spacing={{ xs: 1, sm: 2 }}
+          spacing={{ xs: 1.5, sm: 2.5 }}
         >
-          <SlotLabel slot={slot} />
+          <SlotLabel slot={slot} muted={isCompleted} />
 
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.25 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            <Stack
+              direction="row"
+              spacing={1.25}
+              alignItems="center"
+              sx={{ mb: 0.5 }}
+              flexWrap="wrap"
+            >
+              <Typography
+                component="span"
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  color: isCompleted ? "text.secondary" : "primary.main",
+                  letterSpacing: "0.02em",
+                }}
+              >
                 {job.quoteReference}
               </Typography>
               {isCompleted ? (
                 <Chip
                   size="small"
                   color="success"
-                  label="Completed"
-                  icon={<CheckCircleOutlineIcon />}
+                  label="Done"
+                  icon={<CheckCircleIcon sx={{ fontSize: "14px !important" }} />}
+                  sx={{ height: 22 }}
                 />
-              ) : null}
+              ) : (
+                <Chip
+                  size="small"
+                  label="Scheduled"
+                  sx={{
+                    height: 22,
+                    bgcolor: "rgba(15, 76, 92, 0.08)",
+                    color: "primary.main",
+                    border: 0,
+                    fontWeight: 600,
+                  }}
+                />
+              )}
             </Stack>
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis" }}
+              sx={{
+                color: isCompleted ? "text.disabled" : "text.primary",
+                fontWeight: 500,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                mb: 0.5,
+                textDecoration: isCompleted ? "line-through" : "none",
+                textDecorationColor: "rgba(0,0,0,0.18)",
+              }}
             >
               {job.quoteSummary}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Assigned by {job.managerName}
-              {isCompleted && job.completedAt
-                ? ` - Completed ${formatDateTime(job.completedAt)}`
-                : ""}
-            </Typography>
+            <Stack
+              direction="row"
+              spacing={1.25}
+              divider={
+                <Box
+                  component="span"
+                  sx={{ color: "text.disabled", fontSize: "0.7rem" }}
+                >
+                  ·
+                </Box>
+              }
+              sx={{ flexWrap: "wrap" }}
+            >
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", letterSpacing: "0.02em" }}
+              >
+                Assigned by{" "}
+                <Box
+                  component="span"
+                  sx={{ color: "text.primary", fontWeight: 600 }}
+                >
+                  {job.managerName}
+                </Box>
+              </Typography>
+              {isCompleted && job.completedAt ? (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "success.main",
+                    letterSpacing: "0.02em",
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: 600,
+                  }}
+                >
+                  ✓ {formatDateTime(job.completedAt)}
+                </Typography>
+              ) : null}
+            </Stack>
           </Box>
 
           {!isCompleted && canComplete ? (
@@ -170,11 +335,15 @@ function AssignedSlotRow({
               onClick={() => onComplete(job.id)}
               disabled={completing}
               startIcon={
-                completing ? <CircularProgress size={14} color="inherit" /> : null
+                completing ? (
+                  <CircularProgress size={14} color="inherit" />
+                ) : (
+                  <CheckCircleIcon sx={{ fontSize: 16 }} />
+                )
               }
               sx={{ alignSelf: { xs: "flex-end", sm: "center" }, flexShrink: 0 }}
             >
-              {completing ? "Completing..." : "Mark complete"}
+              {completing ? "Completing…" : "Mark complete"}
             </Button>
           ) : null}
         </Stack>
@@ -183,26 +352,46 @@ function AssignedSlotRow({
   );
 }
 
-function SlotLabel({ slot }: { readonly slot: Slot }) {
+function SlotLabel({ slot, muted }: { readonly slot: Slot; readonly muted: boolean }) {
+  const [startRaw, endRaw] = slot.split("-") as [string, string];
   return (
-    <Typography
-      variant="body2"
+    <Box
       sx={{
-        fontFamily: "monospace",
-        fontWeight: 600,
-        minWidth: 120,
+        minWidth: { xs: "auto", sm: 132 },
         flexShrink: 0,
-        color: "text.primary",
+        py: 0.25,
+        pr: 1,
+        borderRight: { xs: 0, sm: 1 },
+        borderColor: "divider",
       }}
     >
-      {formatSlot(slot)}
-    </Typography>
+      <Typography
+        component="div"
+        sx={{
+          fontFamily: "var(--font-mono)",
+          fontSize: { xs: "1rem", sm: "1.05rem" },
+          fontWeight: 600,
+          color: muted ? "text.secondary" : "text.primary",
+          letterSpacing: "0.02em",
+          lineHeight: 1.15,
+        }}
+      >
+        {formatTime(startRaw)}
+      </Typography>
+      <Typography
+        component="div"
+        sx={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.72rem",
+          color: "text.disabled",
+          letterSpacing: "0.05em",
+          lineHeight: 1.15,
+        }}
+      >
+        — {formatTime(endRaw)}
+      </Typography>
+    </Box>
   );
-}
-
-function formatSlot(slot: Slot): string {
-  const [start, end] = slot.split("-") as [string, string];
-  return `${formatTime(start)} - ${formatTime(end)}`;
 }
 
 function formatTime(hhmm: string): string {
@@ -214,8 +403,6 @@ function formatTime(hhmm: string): string {
 }
 
 function formatDateTime(iso: string): string {
-  // Server returns "YYYY-MM-DD HH:mm:ss" (mysql2 with dateStrings:true).
-  // Convert space to T so date-fns parseISO can read it. AU display.
   try {
     const normalised = iso.includes("T") ? iso : iso.replace(" ", "T");
     return format(parseISO(normalised), "dd/MM/yyyy HH:mm");
