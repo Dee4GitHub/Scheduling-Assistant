@@ -23,5 +23,28 @@ services:
       retries: 10
       start_period: 20s
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scheduling-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # DB_HOST is overridden here so the backend container reaches MySQL via
+      # the compose service name rather than localhost. The reviewer's .env
+      # (with DB_HOST=localhost) stays valid for running the backend on host.
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_DATABASE: scheduling
+      PORT: 4000
+      NODE_ENV: production
+    ports:
+      - "4000:4000"
+
 volumes:
   mysql_data:
