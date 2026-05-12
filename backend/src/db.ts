@@ -16,7 +16,10 @@ export function getPool(): Pool {
       queueLimit: 0,
       enableKeepAlive: true,
       timezone: "Z",
-      dateStrings: ["DATE"],
+      // Return DATE, DATETIME, and TIMESTAMP as ISO strings rather than Date
+      // objects. Keeps Zod response schemas (z.string()) honest and avoids
+      // ad-hoc JSON.stringify date coercion at route boundaries.
+      dateStrings: true,
     });
   }
   return pool;
