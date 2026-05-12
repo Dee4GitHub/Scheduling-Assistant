@@ -13,7 +13,9 @@ export type DomainErrorCode =
   | "TIME_SLOT_CONFLICT"
   | "QUOTE_ALREADY_SCHEDULED"
   | "NOT_FOUND"
-  | "INVALID_REFERENCE";
+  | "INVALID_REFERENCE"
+  | "WRONG_TECHNICIAN"
+  | "JOB_ALREADY_COMPLETED";
 
 export class DomainError extends Error {
   public readonly code: DomainErrorCode;
@@ -67,5 +69,28 @@ export class InvalidReferenceError extends DomainError {
   constructor(message = "One or more referenced entities do not exist") {
     super("INVALID_REFERENCE", message);
     this.name = "InvalidReferenceError";
+  }
+}
+
+// The actor (technician) claimed to complete a job that's assigned to a
+// different technician. No auth in scope for this brief, but the domain
+// helper still verifies the claim before mutating. Route handler maps
+// to 403 — the action is forbidden for this actor, regardless of who
+// they are.
+export class WrongTechnicianError extends DomainError {
+  constructor(message = "This job is assigned to a different technician") {
+    super("WRONG_TECHNICIAN", message);
+    this.name = "WrongTechnicianError";
+  }
+}
+
+// Tried to complete a job that's already in status='completed'. Distinct
+// from a generic 409 because the failure is idempotent-friendly (the
+// caller may just be retrying after a network blip). Route handler maps
+// to 409 with this stable code so the client can recognise and ignore.
+export class JobAlreadyCompletedError extends DomainError {
+  constructor(jobId: number) {
+    super("JOB_ALREADY_COMPLETED", `Job ${jobId} is already completed`);
+    this.name = "JobAlreadyCompletedError";
   }
 }
