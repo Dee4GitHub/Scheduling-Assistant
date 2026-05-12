@@ -73,9 +73,10 @@ await app.register(swaggerUi, {
 });
 
 const pool = getPool();
-await managersRoutes(app, pool);
-await techniciansRoutes(app, pool);
-await quotesRoutes(app, pool);
+app.decorate("mysql", pool);
+await managersRoutes(app);
+await techniciansRoutes(app);
+await quotesRoutes(app);
 
 app.get(
   "/health",
@@ -165,5 +166,5 @@ try {
   );
 } catch (err) {
   app.log.fatal({ err }, "failed to start server");
-  process.exit(1);
+  flushAndExit(1);
 }

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type { Pool, RowDataPacket } from "mysql2/promise";
+import type { RowDataPacket } from "mysql2/promise";
 import {
   ErrorEnvelope,
   ScheduledJobSchema,
@@ -30,10 +30,7 @@ interface ScheduledJobRow extends RowDataPacket {
   manager_name: string;
 }
 
-export async function techniciansRoutes(
-  app: FastifyInstance,
-  pool: Pool,
-): Promise<void> {
+export async function techniciansRoutes(app: FastifyInstance): Promise<void> {
   const typed = app.withTypeProvider<ZodTypeProvider>();
 
   typed.get(
@@ -46,7 +43,7 @@ export async function techniciansRoutes(
       },
     },
     async () => {
-      const [rows] = await pool.query<TechnicianRow[]>(
+      const [rows] = await app.mysql.query<TechnicianRow[]>(
         "SELECT id, name, trade, created_at FROM technicians ORDER BY id",
       );
       return rows.map((r) => ({
@@ -85,7 +82,7 @@ export async function techniciansRoutes(
 
       // Confirm the technician exists - 404 if not, rather than returning an
       // empty schedule that the caller might confuse with "no jobs today".
-      const [techRows] = await pool.query<RowDataPacket[]>(
+      const [techRows] = await app.mysql.query<RowDataPacket[]>(
         "SELECT id FROM technicians WHERE id = ?",
         [id],
       );
@@ -116,7 +113,7 @@ export async function techniciansRoutes(
       }
       sql += " ORDER BY j.scheduled_date, j.slot";
 
-      const [rows] = await pool.query<ScheduledJobRow[]>(sql, params);
+      const [rows] = await app.mysql.query<ScheduledJobRow[]>(sql, params);
       return rows.map((r) => ({
         id: r.id,
         technicianId: r.technician_id,

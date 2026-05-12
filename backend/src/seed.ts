@@ -59,34 +59,55 @@ export async function seedDatabase(pool: Pool, logger: SeedLogger): Promise<void
   try {
     let managersInserted = 0;
     if (await tableIsEmpty(conn, "managers")) {
-      for (const m of MANAGERS) {
-        const [result] = await conn.query<ResultSetHeader>(
-          "INSERT INTO managers (name, email) VALUES (?, ?)",
-          [m.name, m.email],
-        );
-        managersInserted += result.affectedRows;
+      try {
+        await conn.beginTransaction();
+        for (const m of MANAGERS) {
+          const [result] = await conn.query<ResultSetHeader>(
+            "INSERT INTO managers (name, email) VALUES (?, ?)",
+            [m.name, m.email],
+          );
+          managersInserted += result.affectedRows;
+        }
+        await conn.commit();
+      } catch (err) {
+        await conn.rollback();
+        throw err;
       }
     }
 
     let techniciansInserted = 0;
     if (await tableIsEmpty(conn, "technicians")) {
-      for (const t of TECHNICIANS) {
-        const [result] = await conn.query<ResultSetHeader>(
-          "INSERT INTO technicians (name, trade) VALUES (?, ?)",
-          [t.name, t.trade],
-        );
-        techniciansInserted += result.affectedRows;
+      try {
+        await conn.beginTransaction();
+        for (const t of TECHNICIANS) {
+          const [result] = await conn.query<ResultSetHeader>(
+            "INSERT INTO technicians (name, trade) VALUES (?, ?)",
+            [t.name, t.trade],
+          );
+          techniciansInserted += result.affectedRows;
+        }
+        await conn.commit();
+      } catch (err) {
+        await conn.rollback();
+        throw err;
       }
     }
 
     let quotesInserted = 0;
     if (await tableIsEmpty(conn, "quotes")) {
-      for (const q of QUOTES) {
-        const [result] = await conn.query<ResultSetHeader>(
-          "INSERT INTO quotes (reference, summary) VALUES (?, ?)",
-          [q.reference, q.summary],
-        );
-        quotesInserted += result.affectedRows;
+      try {
+        await conn.beginTransaction();
+        for (const q of QUOTES) {
+          const [result] = await conn.query<ResultSetHeader>(
+            "INSERT INTO quotes (reference, summary) VALUES (?, ?)",
+            [q.reference, q.summary],
+          );
+          quotesInserted += result.affectedRows;
+        }
+        await conn.commit();
+      } catch (err) {
+        await conn.rollback();
+        throw err;
       }
     }
 

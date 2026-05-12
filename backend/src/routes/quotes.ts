@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type { Pool, RowDataPacket } from "mysql2/promise";
+import type { RowDataPacket } from "mysql2/promise";
 import { QuoteSchema, QuoteStatusEnum } from "../domain/types.js";
 
 interface QuoteRow extends RowDataPacket {
@@ -12,10 +12,7 @@ interface QuoteRow extends RowDataPacket {
   created_at: string;
 }
 
-export async function quotesRoutes(
-  app: FastifyInstance,
-  pool: Pool,
-): Promise<void> {
+export async function quotesRoutes(app: FastifyInstance): Promise<void> {
   const typed = app.withTypeProvider<ZodTypeProvider>();
 
   typed.get(
@@ -37,7 +34,7 @@ export async function quotesRoutes(
         : "SELECT id, reference, summary, status, created_at FROM quotes ORDER BY id";
       const params = status ? [status] : [];
 
-      const [rows] = await pool.query<QuoteRow[]>(sql, params);
+      const [rows] = await app.mysql.query<QuoteRow[]>(sql, params);
       return rows.map((r) => ({
         id: r.id,
         reference: r.reference,
