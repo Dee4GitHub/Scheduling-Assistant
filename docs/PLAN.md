@@ -47,6 +47,16 @@ Node + TypeScript with Fastify lets me ship code I can defend line by line. Same
 
 If you'd have preferred Go regardless, that's a fair call. The forward plan for Go is in *What I'd build next at brix scale*.
 
+### Why backend in Docker, frontend on host
+
+Backend + database run via `docker compose up -d --build`. Frontend runs on host with `npm run dev`.
+
+**Backend in compose** is the right shape for the take-home review experience: one command brings up the API + DB together, no Node version or `npm install` friction for the reviewer. Same Docker network means the backend reaches MySQL by service name (`DB_HOST=mysql`), which is closer to how the app would deploy than host-backend ↔ container-DB latency.
+
+**Frontend on host** because Next.js's dev server iterates fastest there — file watching and hot reload across the Docker filesystem boundary is slow on Windows/macOS bind mounts and not worth the integration friction during build.
+
+The reviewer's `.env` keeps `DB_HOST=localhost` (valid for running the backend on host). The compose file overrides `DB_HOST=mysql` at the service-environment level for the dockerised backend. No reviewer config swap needed.
+
 ### Why no ORM
 
 No Prisma, Drizzle, or TypeORM. Raw parameterised SQL via `mysql2/promise`. This is deliberate, not a gap.
