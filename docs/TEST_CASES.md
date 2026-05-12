@@ -20,6 +20,19 @@ docker compose ps   # expect both 'scheduling-mysql' and 'scheduling-backend' as
 
 If you need to wipe and re-seed: `docker compose down -v && docker compose up -d`.
 
+## Date format conventions
+
+This is deliberate dual-format: machine-readable on the wire, locale-appropriate on screen.
+
+| Layer | Format | Example |
+|---|---|---|
+| MySQL `DATE` column, JSON API wire, Zod regex, integration tests | ISO 8601 `YYYY-MM-DD` | `2026-12-15` |
+| Frontend date picker input + display, Australian end-user UI | `DD/MM/YYYY` | `15/12/2026` |
+
+The frontend's `LocalizationProvider` uses the `en-AU` locale (`date-fns/locale/enAU`) so the picker shows `DD/MM/YYYY` everywhere. When sending to the API, the frontend converts to ISO via `format(date, "yyyy-MM-dd")`. When receiving from the API for display, the frontend converts to AU format via `format(parseISO(d), "dd/MM/yyyy")`.
+
+**Curl examples in this doc all use ISO** because that's what the API accepts. If you copy-paste a date from a screenshot of the UI (e.g. `15/12/2026`), convert to ISO (`2026-12-15`) before pasting into a curl body — the backend will reject `15/12/2026` with a Zod 400.
+
 ---
 
 ## Section A — Backend smoke (run after every backend rebuild)
