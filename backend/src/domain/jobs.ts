@@ -51,7 +51,7 @@ export async function assignJob(pool: Pool, input: AssignJobInput): Promise<Job>
     await conn.beginTransaction();
     const job = await insertJob(conn, input);
     await markQuoteScheduled(conn, input.quoteId);
-    await insertAssignmentNotification(conn, job);
+    await insertNotification(conn, buildAssignmentNotification(job));
     await conn.commit();
     return job;
   } catch (err) {
@@ -60,6 +60,30 @@ export async function assignJob(pool: Pool, input: AssignJobInput): Promise<Job>
   } finally {
     conn.release();
   }
+}
+
+// Pure: shape of a notification row, derived from Job data alone. No I/O.
+// Per backend/CLAUDE.md: "Notification builders are pure functions of Job
+// data. They return shapes; they do not write to the database." Splitting
+// the build from the write keeps the message-formatting logic testable in
+// isolation and gives the future job-completion path a single builder
+// surface to mirror.
+export interface NotificationRow {
+  type: "job_assigned" | "job_completed";
+  recipientType: "technician" | "manager";
+  recipientId: number;
+  jobId: number;
+  message: string;
+}
+
+export function buildAssignmentNotification(job: Job): NotificationRow {
+  return {
+    type: "job_assigned",
+    recipientType: "technician",
+    recipientId: job.technicianId,
+    jobId: job.id,
+    message: `New job assigned for ${job.scheduledDate} ${job.slot}`,
+  };
 }
 
 async function insertJob(conn: PoolConnection, input: AssignJobInput): Promise<Job> {
@@ -115,19 +139,18 @@ async function markQuoteScheduled(conn: PoolConnection, quoteId: number): Promis
   }
 }
 
-async function insertAssignmentNotification(
+// Thin writer: takes the pure NotificationRow shape and persists it. The
+// only side-effect here is the INSERT — no message formatting, no Job-shape
+// transformation, no business rules. Mirror writer for `buildAssignmentNotification`.
+async function insertNotification(
   conn: PoolConnection,
-  job: Job,
+  row: NotificationRow,
 ): Promise<void> {
   await conn.query<ResultSetHeader>(
     `INSERT INTO notifications
        (type, recipient_type, recipient_id, job_id, message)
-     VALUES ('job_assigned', 'technician', ?, ?, ?)`,
-    [
-      job.technicianId,
-      job.id,
-      `New job assigned for ${job.scheduledDate} ${job.slot}`,
-    ],
+     VALUES (?, ?, ?, ?, ?)`,
+    [row.type, row.recipientType, row.recipientId, row.jobId, row.message],
   );
 }
 
@@ -153,9 +176,12 @@ function mapDriverError(err: unknown): unknown {
     if (msg.includes("uniq_quote")) {
       return new QuoteAlreadyScheduledError();
     }
-    // Unrecognised UNIQUE constraint — schema has only the two above, but
-    // be honest about the unknown rather than guess.
-    return new TimeSlotConflictError("Duplicate entry on an unexpected key");
+    // Unrecognised UNIQUE constraint — schema has only the two above today.
+    // Pass the original driver error through so the route handler's catch
+    // chain falls past `instanceof DomainError` and Fastify returns 500.
+    // Lying to the client with a 409 TIME_SLOT_CONFLICT for an unknown
+    // constraint would mask the schema drift, not surface it.
+    return err;
   }
   if (err.code === ER_NO_REFERENCED_ROW) {
     // FK violation. sqlMessage contains the constraint name (fk_jobs_technician,
