@@ -87,6 +87,29 @@ export function AssignJobForm({
     }
   }, [initialManagerId]);
 
+  // Stale-id guard: when the parent refetches `quotes` after a successful
+  // assignment, the just-assigned quote disappears from the available list.
+  // The form's draft.quoteId still points at the old id, which would (1)
+  // make MUI's Select complain about an out-of-range value, and (2) allow
+  // the user to click Assign and submit a stale id (the backend would
+  // reject with QUOTE_ALREADY_SCHEDULED, but better to never send it).
+  //
+  // Computing `effectiveQuoteId` during render — not via useEffect — closes
+  // the one-frame window where MUI's Select would see the stale value
+  // before the effect cleanup ran. If the drafted id isn't in the list,
+  // the Select sees "" immediately, no warning fires, and the next
+  // render-after-effect (below) syncs the draft state to match.
+  const effectiveQuoteId: DraftId =
+    draft.quoteId !== "" && quotes.some((q) => q.id === draft.quoteId)
+      ? draft.quoteId
+      : "";
+
+  useEffect(() => {
+    if (draft.quoteId !== "" && draft.quoteId !== effectiveQuoteId) {
+      setDraft((prev) => ({ ...prev, quoteId: "" }));
+    }
+  }, [draft.quoteId, effectiveQuoteId]);
+
   const updateIdField =
     (key: "technicianId" | "quoteId" | "managerId") =>
     (e: SelectChangeEvent<DraftId>) => {
@@ -105,9 +128,13 @@ export function AssignJobForm({
     setDraft((prev) => ({ ...prev, scheduledDate: date }));
   };
 
+  // Use effectiveQuoteId rather than draft.quoteId so the button correctly
+  // becomes disabled the moment the selected quote becomes unavailable
+  // (e.g. another tab assigned it), without waiting for the useEffect that
+  // syncs the draft state back. Same render, same truth.
   const isComplete =
     draft.technicianId !== "" &&
-    draft.quoteId !== "" &&
+    effectiveQuoteId !== "" &&
     draft.managerId !== "" &&
     draft.scheduledDate !== null &&
     draft.slot !== "";
@@ -121,7 +148,7 @@ export function AssignJobForm({
     // the body.
     const payload: AssignJobInput = {
       technicianId: draft.technicianId as number,
-      quoteId: draft.quoteId as number,
+      quoteId: effectiveQuoteId as number,
       managerId: draft.managerId as number,
       scheduledDate: format(draft.scheduledDate as Date, "yyyy-MM-dd"),
       slot: draft.slot as Slot,
@@ -170,7 +197,7 @@ export function AssignJobForm({
           <Select<DraftId>
             labelId="quote-label"
             id="quote"
-            value={draft.quoteId}
+            value={effectiveQuoteId}
             label="Quote"
             onChange={updateIdField("quoteId")}
             inputProps={{ name: "quoteId" }}
