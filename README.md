@@ -36,6 +36,8 @@ Tear down: `docker compose down -v` (the `-v` drops the seed data; omit to keep 
 
 ### Dev mode (without Docker for the apps)
 
+Requires Node 22+ on the host.
+
 ```bash
 docker compose up -d mysql      # MySQL only
 cd backend && npm install && npm run dev
