@@ -99,6 +99,53 @@ export type AssignJobInput = z.infer<typeof AssignJobInputSchema>;
 export const AssignJobRequestSchema = AssignJobInputSchema;
 export type AssignJobRequest = AssignJobInput;
 
+// Input to completeJob — the actor (technician) claims their identity in the
+// body. No auth in scope for this brief; the domain helper verifies the actor
+// matches the job's assigned technician and returns 403 otherwise.
+export const CompleteJobInputSchema = z.object({
+  technicianId: z.number().int().positive(),
+});
+export type CompleteJobInput = z.infer<typeof CompleteJobInputSchema>;
+
+export const CompleteJobRequestSchema = CompleteJobInputSchema;
+export type CompleteJobRequest = CompleteJobInput;
+
+// Notification resource — what GET /api/notifications returns.
+export const NotificationSchema = z.object({
+  id: z.number().int().positive(),
+  type: NotificationTypeEnum,
+  recipientType: RecipientTypeEnum,
+  recipientId: z.number().int().positive(),
+  jobId: z.number().int().positive(),
+  message: z.string(),
+  createdAt: z.string(),
+  readAt: z.string().nullable(),
+});
+export type Notification = z.infer<typeof NotificationSchema>;
+
+// Querystring for GET /api/notifications. recipientType + recipientId are
+// required — listing every notification in the system is not a real use case
+// and would be a security smell once auth is wired. unreadOnly defaults to
+// false; the frontend bell-icon will pass true for the badge count.
+//
+// unreadOnly is an enum-then-transform, NOT z.coerce.boolean(). Reason:
+// z.coerce.boolean() runs JavaScript's Boolean() on the raw value, and
+// Boolean("false") === true (any non-empty string is truthy). So
+// ?unreadOnly=false would silently return unread-only — the opposite of
+// what the caller asked for. The enum-of-string-literals + transform
+// rejects every value except "true" or "false" with a 400, then narrows
+// to a real boolean.
+export const ListNotificationsQuerySchema = z.object({
+  recipientType: RecipientTypeEnum,
+  recipientId: z.coerce.number().int().positive(),
+  unreadOnly: z
+    .enum(["true", "false"])
+    .optional()
+    .default("false")
+    .transform((v) => v === "true"),
+});
+export type ListNotificationsQuery = z.infer<typeof ListNotificationsQuerySchema>;
+
 // Error envelope per backend/CLAUDE.md.
 export const ErrorEnvelope = z.object({
   error: z.string(),

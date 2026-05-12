@@ -7,9 +7,11 @@ import type {
 import type { AssignJobInput, Job } from "./types.js";
 import {
   InvalidReferenceError,
+  JobAlreadyCompletedError,
   NotFoundError,
   QuoteAlreadyScheduledError,
   TimeSlotConflictError,
+  WrongTechnicianError,
 } from "./errors.js";
 
 // Domain helper: assign a quote to a technician on a specific (date, slot).
@@ -83,6 +85,125 @@ export function buildAssignmentNotification(job: Job): NotificationRow {
     recipientId: job.technicianId,
     jobId: job.id,
     message: `New job assigned for ${job.scheduledDate} ${job.slot}`,
+  };
+}
+
+// Pure: shape of the manager-facing completion notification. Mirrors
+// buildAssignmentNotification but flips recipient — the manager who created
+// the assignment is the one who wants to know it's done.
+export function buildCompletionNotification(job: Job): NotificationRow {
+  return {
+    type: "job_completed",
+    recipientType: "manager",
+    recipientId: job.managerId,
+    jobId: job.id,
+    message: `Job completed for ${job.scheduledDate} ${job.slot}`,
+  };
+}
+
+// Domain helper: technician marks their own job complete.
+// Two writes in one transaction:
+//   1. UPDATE jobs SET status='completed', completed_at=NOW() WHERE id=?
+//   2. INSERT into notifications  — recipient = the manager
+//
+// Authorisation: the actor (technician) claims their identity in the body.
+// No auth in scope for this brief; we verify the claim against the row's
+// technician_id and 403 on mismatch. SELECT...FOR UPDATE locks the row at
+// the start of the transaction so two concurrent completes can't both pass
+// the status check and double-fire the notification — InnoDB serialises on
+// the row lock the same way it serialised on the UNIQUE index in assignJob.
+export async function completeJob(
+  pool: Pool,
+  jobId: number,
+  actorTechnicianId: number,
+): Promise<Job> {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const current = await lockAndReadJob(conn, jobId);
+    authoriseCompletion(current, actorTechnicianId);
+    await markJobCompleted(conn, jobId);
+    const updated = await readJob(conn, jobId);
+    await insertNotification(conn, buildCompletionNotification(updated));
+    await conn.commit();
+    return updated;
+  } catch (err) {
+    await conn.rollback();
+    throw mapDriverError(err);
+  } finally {
+    conn.release();
+  }
+}
+
+async function lockAndReadJob(conn: PoolConnection, jobId: number): Promise<Job> {
+  // FOR UPDATE: acquire a row-level X lock so concurrent completeJob calls on
+  // the same row serialise here. Without it, both callers could read
+  // status='scheduled', both UPDATE, both INSERT a notification — racing past
+  // the status guard. The lock makes the second caller block until the first
+  // commits, then see status='completed' and short-circuit with
+  // JobAlreadyCompletedError. Same arbitration pattern as assignJob's UNIQUE
+  // index, just at a different InnoDB layer.
+  const [rows] = await conn.query<JobRow[]>(
+    `SELECT id, technician_id, quote_id, manager_id, scheduled_date,
+            slot, status, assigned_at, completed_at
+       FROM jobs WHERE id = ?
+       FOR UPDATE`,
+    [jobId],
+  );
+  const row = rows[0];
+  if (!row) {
+    throw new NotFoundError("Job", jobId);
+  }
+  return rowToJob(row);
+}
+
+function authoriseCompletion(job: Job, actorTechnicianId: number): void {
+  if (job.technicianId !== actorTechnicianId) {
+    throw new WrongTechnicianError();
+  }
+  if (job.status === "completed") {
+    throw new JobAlreadyCompletedError(job.id);
+  }
+}
+
+async function markJobCompleted(conn: PoolConnection, jobId: number): Promise<void> {
+  const [result] = await conn.query<ResultSetHeader>(
+    "UPDATE jobs SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = ?",
+    [jobId],
+  );
+  if (result.affectedRows === 0) {
+    // The row was locked at lockAndReadJob, so it can't have vanished mid-tx.
+    // If this fires the DB is in an unexpected state — surface loudly rather
+    // than fall through with stale data.
+    throw new Error(`job ${jobId} not updated despite lock — transaction integrity failure`);
+  }
+}
+
+async function readJob(conn: PoolConnection, jobId: number): Promise<Job> {
+  const [rows] = await conn.query<JobRow[]>(
+    `SELECT id, technician_id, quote_id, manager_id, scheduled_date,
+            slot, status, assigned_at, completed_at
+       FROM jobs WHERE id = ?`,
+    [jobId],
+  );
+  const row = rows[0];
+  if (!row) {
+    throw new Error(`job ${jobId} not readable after update`);
+  }
+  return rowToJob(row);
+}
+
+function rowToJob(row: JobRow): Job {
+  return {
+    id: row.id,
+    technicianId: row.technician_id,
+    quoteId: row.quote_id,
+    managerId: row.manager_id,
+    scheduledDate: row.scheduled_date,
+    slot: row.slot,
+    status: row.status,
+    assignedAt: row.assigned_at,
+    completedAt: row.completed_at,
   };
 }
 

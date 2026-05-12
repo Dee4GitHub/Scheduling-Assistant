@@ -16,6 +16,7 @@ import { managersRoutes } from "./routes/managers.js";
 import { techniciansRoutes } from "./routes/technicians.js";
 import { quotesRoutes } from "./routes/quotes.js";
 import { jobsRoutes } from "./routes/jobs.js";
+import { notificationsRoutes } from "./routes/notifications.js";
 
 const app = Fastify({
   logger: {
@@ -79,6 +80,7 @@ await managersRoutes(app);
 await techniciansRoutes(app);
 await quotesRoutes(app);
 await jobsRoutes(app);
+await notificationsRoutes(app);
 
 app.get(
   "/health",
