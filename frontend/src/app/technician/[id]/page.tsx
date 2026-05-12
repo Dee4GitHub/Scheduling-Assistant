@@ -211,13 +211,13 @@ export default function TechnicianSchedulePage() {
                 id="schedule-date-label"
                 sx={{
                   display: "block",
-                  fontSize: "0.95rem",
+                  fontSize: "1rem",
                   fontWeight: 600,
                   color: "text.primary",
                   mb: 1,
                 }}
               >
-                Date
+                Select work date
               </Typography>
               <DatePicker
                 value={date}

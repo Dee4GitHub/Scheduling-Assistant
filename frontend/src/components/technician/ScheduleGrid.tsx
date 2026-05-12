@@ -69,15 +69,25 @@ export function ScheduleGrid({
       >
         <Box>
           <Typography
-            variant="overline"
-            sx={{ color: "text.secondary", display: "block" }}
+            component="span"
+            sx={{
+              display: "block",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              color: "text.secondary",
+              mb: 0.5,
+            }}
           >
             Schedule for
           </Typography>
           <Typography
-            variant="h5"
             component="h2"
-            sx={{ fontWeight: 700, letterSpacing: "-0.015em" }}
+            sx={{
+              fontWeight: 700,
+              fontSize: "1.25rem",
+              letterSpacing: "-0.01em",
+              color: "text.primary",
+            }}
           >
             {format(date, "EEEE, d MMMM yyyy")}
           </Typography>

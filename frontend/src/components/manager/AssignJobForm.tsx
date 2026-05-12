@@ -255,11 +255,11 @@ export function AssignJobForm({
               value={draft.scheduledDate}
               onChange={updateDate}
               disabled={submitting}
-              // Backend's regex accepts any YYYY-MM-DD; the UI restricts to
-              // today-or-later to match the business rule that you don't
-              // schedule a job in the past. Backend will accept past dates
-              // — this is a UX guardrail, not a security boundary.
-              minDate={new Date()}
+              // Block past dates entirely (popup AND keyboard input) — you
+              // don't schedule a job for yesterday. Backend's regex accepts
+              // any YYYY-MM-DD; this is a UX guardrail, not a security
+              // boundary.
+              disablePast
               slotProps={{
                 textField: {
                   fullWidth: true,
@@ -356,10 +356,11 @@ export function AssignJobForm({
 }
 
 function formatSlot(slot: Slot): string {
-  // Display form: "9:00 AM - 11:00 AM". Backend uses 24h ENUMs; we humanise
-  // for the UI without changing the wire value.
+  // Display form: "9:00 AM to 11:00 AM". Backend uses 24h ENUMs; we
+  // humanise for the UI without changing the wire value. Matches the
+  // technician schedule slot rows.
   const [start, end] = slot.split("-") as [string, string];
-  return `${formatTime(start)} - ${formatTime(end)}`;
+  return `${formatTime(start)} to ${formatTime(end)}`;
 }
 
 function formatTime(hhmm: string): string {

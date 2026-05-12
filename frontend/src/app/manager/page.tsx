@@ -187,9 +187,9 @@ export default function ManagerDashboardPage() {
         <Typography
           component="h2"
           sx={{
-            fontWeight: 600,
-            fontSize: "1.05rem",
-            letterSpacing: "-0.005em",
+            fontWeight: 700,
+            fontSize: "1.25rem",
+            letterSpacing: "-0.01em",
             color: "text.primary",
             mb: 3,
             pb: 1.5,
