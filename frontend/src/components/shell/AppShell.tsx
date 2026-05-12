@@ -10,8 +10,8 @@ import {
   Typography,
 } from "@mui/material";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
-import { RoleStrip } from "@/components/RoleStrip";
-import { NotificationBell } from "@/components/NotificationBell";
+import { RoleStrip } from "@/components/role/RoleStrip";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 // Visible application shell wrapping every page. Three pieces:
 //   1. Top AppBar with the app title (links back to /).

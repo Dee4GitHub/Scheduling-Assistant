@@ -1,6 +1,6 @@
 "use client";
 
-import { useRole } from "@/components/RoleContext";
+import { useRole } from "@/components/role/RoleContext";
 
 // Bell-icon component. Owns its own data subscription (refetch-on-focus) so
 // pages don't need to thread notification state through their props.

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
-import { Providers } from "@/components/Providers";
+import { Providers } from "@/components/shell/Providers";
 
 export const metadata: Metadata = {
   title: "Scheduling Assistant",

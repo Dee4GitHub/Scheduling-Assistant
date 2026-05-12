@@ -1,6 +1,6 @@
 "use client";
 
-import { useRole } from "@/components/RoleContext";
+import { useRole } from "@/components/role/RoleContext";
 import { Typography } from "@mui/material";
 
 // Visible "Viewing as: …" indicator + dropdown to switch role.

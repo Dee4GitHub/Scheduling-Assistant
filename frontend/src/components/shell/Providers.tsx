@@ -4,8 +4,8 @@ import { useState } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { theme } from "@/theme";
-import { RoleProvider } from "@/components/RoleContext";
-import { AppShell } from "@/components/AppShell";
+import { RoleProvider } from "@/components/role/RoleContext";
+import { AppShell } from "@/components/shell/AppShell";
 
 // All client-only providers in one wrapper. Kept out of app/layout.tsx so the
 // layout can stay server-rendered and only the interactive shell is shipped
