@@ -81,12 +81,16 @@ export default function ManagerDashboardPage() {
       setResetCounter((n) => n + 1);
       // Refresh the unscheduled-quotes dropdown immediately so the assigned
       // quote disappears, and refresh the technician's schedule so the new
-      // job appears in any open schedule view. The prefix queryKeys.quotes()
-      // and queryKeys.schedule(..., undefined) wouldn't match here — we have
-      // to invalidate the exact keys we care about, or use a prefix.
+      // job appears in any open schedule view. Both use a prefix
+      // invalidation so every date-scoped subkey of the schedule (e.g.
+      // ["schedule", techId, "2026-05-12"]) matches and refetches. Calling
+      // queryKeys.schedule(techId, undefined) would produce
+      // ["schedule", techId, "all"] which is NOT a prefix of the
+      // date-scoped keys — a footgun the previous version of this code
+      // walked into and shipped despite naming the gotcha in the comment.
       void queryClient.invalidateQueries({ queryKey: queryKeys.quotes() });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.schedule(job.technicianId, undefined),
+        queryKey: ["schedule", job.technicianId],
       });
       // Also invalidate notifications for the technician — the assignment
       // emitted a job_assigned notification that the bell-icon should pick up.
