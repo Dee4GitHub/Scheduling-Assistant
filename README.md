@@ -59,7 +59,7 @@ If you exercise the assignment flow and run out of unscheduled quotes, reset the
 cd backend && npm run db:reset
 ```
 
-Wipes `jobs` and `notifications`, flips every quote's status back to `unscheduled`. The managers, technicians, and quote references (Q-1042, Q-1051, ...) are preserved so you always start from the same seed. The SQL it runs lives in [`db/002_reset.sql`](db/002_reset.sql).
+Wipes `jobs` and `notifications`, flips every quote's status back to `unscheduled`. The managers, technicians, and quote references (Q-1042, Q-1051, ...) are preserved so you always start from the same seed. The SQL it runs lives in [`backend/scripts/reset.sql`](backend/scripts/reset.sql) — kept separate from `db/001_schema.sql` so MySQL's auto-init only loads the schema, not the reset.
 
 ## Stack
 
