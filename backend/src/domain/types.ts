@@ -127,10 +127,22 @@ export type Notification = z.infer<typeof NotificationSchema>;
 // required — listing every notification in the system is not a real use case
 // and would be a security smell once auth is wired. unreadOnly defaults to
 // false; the frontend bell-icon will pass true for the badge count.
+//
+// unreadOnly is an enum-then-transform, NOT z.coerce.boolean(). Reason:
+// z.coerce.boolean() runs JavaScript's Boolean() on the raw value, and
+// Boolean("false") === true (any non-empty string is truthy). So
+// ?unreadOnly=false would silently return unread-only — the opposite of
+// what the caller asked for. The enum-of-string-literals + transform
+// rejects every value except "true" or "false" with a 400, then narrows
+// to a real boolean.
 export const ListNotificationsQuerySchema = z.object({
   recipientType: RecipientTypeEnum,
   recipientId: z.coerce.number().int().positive(),
-  unreadOnly: z.coerce.boolean().optional().default(false),
+  unreadOnly: z
+    .enum(["true", "false"])
+    .optional()
+    .default("false")
+    .transform((v) => v === "true"),
 });
 export type ListNotificationsQuery = z.infer<typeof ListNotificationsQuerySchema>;
 
