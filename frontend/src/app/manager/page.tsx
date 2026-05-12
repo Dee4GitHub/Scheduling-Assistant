@@ -212,22 +212,32 @@ export default function ManagerDashboardPage() {
           direction="row"
           spacing={1.5}
           alignItems="baseline"
-          sx={{ mb: 3 }}
+          sx={{ mb: 3, pb: 1.5, borderBottom: 1, borderColor: "divider" }}
         >
+          <Typography
+            component="h2"
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              fontSize: "1.05rem",
+              letterSpacing: "-0.005em",
+              color: "text.primary",
+            }}
+          >
+            Work order draft
+          </Typography>
           <Typography
             component="span"
             sx={{
+              ml: "auto",
               fontFamily: "var(--font-mono)",
-              fontSize: "0.7rem",
+              fontSize: "0.62rem",
               fontWeight: 600,
-              color: "secondary.main",
-              letterSpacing: "0.12em",
+              color: "text.disabled",
+              letterSpacing: "0.14em",
             }}
           >
             WO-{String(initialManagerId ?? 0).padStart(3, "0")}
-          </Typography>
-          <Typography variant="overline" sx={{ color: "text.primary" }}>
-            Work order draft
           </Typography>
         </Stack>
         <AssignJobForm

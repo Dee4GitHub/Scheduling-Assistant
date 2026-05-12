@@ -194,7 +194,7 @@ export default function TechnicianSchedulePage() {
           </Typography>
           <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 640 }}>
             {canComplete
-              ? "Four two-hour slots per day. Click Mark complete when a job is done — the assigning manager is notified."
+              ? "Four two-hour slots per day. Click Mark complete when a job is done; the assigning manager is notified."
               : "Four two-hour slots per day. Only the assigned technician can mark a job complete."}
           </Typography>
         </Box>
@@ -226,16 +226,34 @@ export default function TechnicianSchedulePage() {
             sx={{ mb: 3 }}
           >
             <Box>
-              <Typography variant="overline" sx={{ color: "text.primary", mb: 0.5, display: "block" }}>
+              <Typography
+                component="span"
+                id="schedule-date-label"
+                sx={{
+                  display: "block",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  color: "text.primary",
+                  mb: 0.75,
+                }}
+              >
                 Date
               </Typography>
               <DatePicker
-                label="Date"
                 value={date}
                 onChange={(d) => {
                   if (d !== null) setDate(d);
                 }}
-                slotProps={{ textField: { size: "small", sx: { minWidth: 220 } } }}
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    sx: { minWidth: 220 },
+                    placeholder: "DD/MM/YYYY",
+                    inputProps: { "aria-labelledby": "schedule-date-label" },
+                  },
+                }}
               />
             </Box>
           </Stack>

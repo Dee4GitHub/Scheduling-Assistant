@@ -135,7 +135,15 @@ export function RolePicker() {
             displayEmpty
             renderValue={(value) =>
               value === "" ? (
-                <Typography component="span" sx={{ color: "text.disabled" }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    color: "text.disabled",
+                    fontWeight: 400,
+                    fontSize: "0.92rem",
+                    fontStyle: "italic",
+                  }}
+                >
                   Manager or Technician?
                 </Typography>
               ) : value === "manager" ? (
@@ -166,7 +174,15 @@ export function RolePicker() {
             displayEmpty
             renderValue={(value) =>
               value === "" ? (
-                <Typography component="span" sx={{ color: "text.disabled" }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    color: "text.disabled",
+                    fontWeight: 400,
+                    fontSize: "0.92rem",
+                    fontStyle: "italic",
+                  }}
+                >
                   {role === ""
                     ? "Pick a role first"
                     : role === "manager"
@@ -229,23 +245,32 @@ function FieldBlock({
 }) {
   return (
     <Box>
-      <Stack direction="row" spacing={1.5} alignItems="baseline" sx={{ mb: 1 }}>
+      <Stack direction="row" spacing={1.25} alignItems="baseline" sx={{ mb: 1.25 }}>
         <Typography
           component="span"
           sx={{
             fontFamily: "var(--font-mono)",
-            fontSize: "0.7rem",
+            fontSize: "0.6rem",
             fontWeight: 600,
-            color: "secondary.main",
-            letterSpacing: "0.1em",
+            color: "text.disabled",
+            letterSpacing: "0.12em",
+            width: 18,
+            flexShrink: 0,
           }}
         >
           {tag}
         </Typography>
         <Typography
           id={labelId}
-          variant="overline"
-          sx={{ color: "text.primary" }}
+          component="span"
+          sx={{
+            fontSize: "0.78rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "text.primary",
+            lineHeight: 1.4,
+          }}
         >
           {label}
         </Typography>

@@ -67,7 +67,7 @@ export default function HomePage() {
         >
           Managers assign quotes to technicians on fixed two-hour slots.
           Technicians mark jobs complete from their schedule. There is no
-          login — pick the user you want to view the app as.
+          login: pick the user you want to view the app as.
         </Typography>
       </Box>
 
@@ -92,12 +92,38 @@ export default function HomePage() {
           },
         }}
       >
-        <Typography
-          variant="overline"
-          sx={{ display: "block", color: "primary.main", mb: 2.5 }}
+        <Stack
+          direction="row"
+          spacing={1.5}
+          alignItems="baseline"
+          sx={{ mb: 2.5, pb: 1.5, borderBottom: 1, borderColor: "divider" }}
         >
-          Identify
-        </Typography>
+          <Typography
+            component="h2"
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              fontSize: "1.05rem",
+              letterSpacing: "-0.005em",
+              color: "text.primary",
+            }}
+          >
+            Identify
+          </Typography>
+          <Typography
+            component="span"
+            sx={{
+              ml: "auto",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.62rem",
+              fontWeight: 600,
+              color: "text.disabled",
+              letterSpacing: "0.14em",
+            }}
+          >
+            Step 01
+          </Typography>
+        </Stack>
         <RolePicker />
       </Paper>
     </Stack>
