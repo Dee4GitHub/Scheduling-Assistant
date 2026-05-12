@@ -13,6 +13,11 @@ const EnvSchema = z.object({
   DB_DATABASE: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(4000),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  // Comma-separated list of allowed cross-origin frontends. Read in
+  // production by the CORS plugin; ignored in development where any
+  // origin is allowed. Default empty string falls back to
+  // http://localhost:3000 in server.ts.
+  CORS_ORIGIN: z.string().default(""),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -37,5 +42,6 @@ export function redactedEnvForLogs(): Record<string, unknown> {
     DB_DATABASE: env.DB_DATABASE,
     PORT: env.PORT,
     NODE_ENV: env.NODE_ENV,
+    CORS_ORIGIN: env.CORS_ORIGIN === "" ? "(default: http://localhost:3000)" : env.CORS_ORIGIN,
   };
 }

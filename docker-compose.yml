@@ -43,8 +43,33 @@ services:
       DB_DATABASE: scheduling
       PORT: 4000
       NODE_ENV: production
+      # The browser-side frontend lives on http://localhost:3000 (the
+      # published port of the frontend container). The backend treats it
+      # as a trusted origin so cross-origin fetches succeed.
+      CORS_ORIGIN: http://localhost:3000
     ports:
       - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # The browser-side fetch from the user's host needs the API on
+        # localhost:4000 (backend's published port), not the in-network
+        # service name. NEXT_PUBLIC_* gets inlined at build time, so it
+        # has to be passed as a build arg, not a runtime env.
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    container_name: scheduling-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
 
 volumes:
   mysql_data:

@@ -42,8 +42,19 @@ const app = Fastify({
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
+// CORS:
+//   - Development: allow all origins so the Next dev server (different
+//     port) can hit the API without ceremony.
+//   - Production: allow CORS_ORIGIN explicitly (comma-separated list).
+//     Falls back to http://localhost:3000 for the docker-compose
+//     reviewer flow, where the browser hits the frontend on :3000 and
+//     the API on :4000 — same machine, different origins.
+const corsOrigins =
+  env.CORS_ORIGIN.length > 0
+    ? env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
+    : ["http://localhost:3000"];
 await app.register(cors, {
-  origin: env.NODE_ENV === "production" ? false : true,
+  origin: env.NODE_ENV === "production" ? corsOrigins : true,
   credentials: true,
 });
 
