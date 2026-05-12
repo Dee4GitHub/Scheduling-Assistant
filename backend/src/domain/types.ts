@@ -66,6 +66,39 @@ export const ScheduledJobSchema = z.object({
 });
 export type ScheduledJob = z.infer<typeof ScheduledJobSchema>;
 
+// A bare job row — what assignJob returns. Distinct from ScheduledJobSchema,
+// which is the joined-with-display-data shape used by GET /technicians/:id/schedule.
+// Keeping them separate avoids a JOIN in the assignment path's response.
+export const JobSchema = z.object({
+  id: z.number().int().positive(),
+  technicianId: z.number().int().positive(),
+  quoteId: z.number().int().positive(),
+  managerId: z.number().int().positive(),
+  scheduledDate: z.string(),
+  slot: SlotEnum,
+  status: JobStatusEnum,
+  assignedAt: z.string(),
+  completedAt: z.string().nullable(),
+});
+export type Job = z.infer<typeof JobSchema>;
+
+// Input to assignJob — the domain helper. Routes parse the HTTP body with
+// AssignJobRequestSchema (below) and pass the result through.
+export const AssignJobInputSchema = z.object({
+  technicianId: z.number().int().positive(),
+  quoteId: z.number().int().positive(),
+  managerId: z.number().int().positive(),
+  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
+  slot: SlotEnum,
+});
+export type AssignJobInput = z.infer<typeof AssignJobInputSchema>;
+
+// The HTTP request body shape for POST /api/jobs. Currently identical to
+// AssignJobInputSchema but kept as a separate export so the route boundary
+// is explicit and either side can evolve without dragging the other.
+export const AssignJobRequestSchema = AssignJobInputSchema;
+export type AssignJobRequest = AssignJobInput;
+
 // Error envelope per backend/CLAUDE.md.
 export const ErrorEnvelope = z.object({
   error: z.string(),

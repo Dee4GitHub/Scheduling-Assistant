@@ -15,6 +15,7 @@ import { seedDatabase } from "./seed.js";
 import { managersRoutes } from "./routes/managers.js";
 import { techniciansRoutes } from "./routes/technicians.js";
 import { quotesRoutes } from "./routes/quotes.js";
+import { jobsRoutes } from "./routes/jobs.js";
 
 const app = Fastify({
   logger: {
@@ -77,6 +78,7 @@ app.decorate("mysql", pool);
 await managersRoutes(app);
 await techniciansRoutes(app);
 await quotesRoutes(app);
+await jobsRoutes(app);
 
 app.get(
   "/health",
