@@ -4,7 +4,7 @@ import { Providers } from "@/components/shell/Providers";
 
 export const metadata: Metadata = {
   title: "Scheduling Assistant",
-  description: "Brix demo — manager assigns quotes, technicians complete jobs",
+  description: "Brix demo - manager assigns quotes, technicians complete jobs",
 };
 
 export default function RootLayout({
