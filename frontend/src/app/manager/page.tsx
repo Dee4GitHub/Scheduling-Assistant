@@ -68,12 +68,17 @@ export default function ManagerDashboardPage() {
 
   const [submitError, setSubmitError] = useState<ApiError | null>(null);
   const [lastAssigned, setLastAssigned] = useState<Job | null>(null);
+  // Bumped after each successful assignment to clear the form draft.
+  // Counter rather than boolean so consecutive successes still fire the
+  // reset effect — toggling true→true wouldn't.
+  const [resetCounter, setResetCounter] = useState(0);
 
   const mutation = useMutation({
     mutationFn: (input: AssignJobInput) => assignJob(input),
     onSuccess: (job) => {
       setLastAssigned(job);
       setSubmitError(null);
+      setResetCounter((n) => n + 1);
       // Refresh the unscheduled-quotes dropdown immediately so the assigned
       // quote disappears, and refresh the technician's schedule so the new
       // job appears in any open schedule view. The prefix queryKeys.quotes()
@@ -205,6 +210,7 @@ export default function ManagerDashboardPage() {
           managerId={managerId}
           submitting={mutation.isPending}
           lastError={submitError}
+          resetCounter={resetCounter}
           onSubmit={(input) => mutation.mutate(input)}
         />
       </Paper>

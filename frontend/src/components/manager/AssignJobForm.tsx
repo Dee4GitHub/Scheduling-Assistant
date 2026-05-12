@@ -44,6 +44,11 @@ interface AssignJobFormProps {
   readonly managerId: number;
   readonly submitting: boolean;
   readonly lastError: ApiError | null;
+  // Incrementing counter from the parent. Every change clears the draft
+  // back to EMPTY_DRAFT. The parent bumps it on successful assignment so
+  // the form is ready for the next entry without keeping stale technician
+  // / date / slot selections.
+  readonly resetCounter: number;
   onSubmit(input: AssignJobInput): void;
 }
 
@@ -70,9 +75,19 @@ export function AssignJobForm({
   managerId,
   submitting,
   lastError,
+  resetCounter,
   onSubmit,
 }: AssignJobFormProps) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+
+  // Parent-driven full reset. Skips the initial mount so the form
+  // doesn't churn before the first submit. After every successful
+  // assignment the parent increments resetCounter, clearing every
+  // field — technician, date, slot — not just the quote (which the
+  // stale-id guard already clears).
+  useEffect(() => {
+    setDraft(EMPTY_DRAFT);
+  }, [resetCounter]);
 
   // Stale-id guard: when the parent refetches `quotes` after a successful
   // assignment, the just-assigned quote disappears from the available list.
