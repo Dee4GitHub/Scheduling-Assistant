@@ -144,43 +144,33 @@ export default function ManagerDashboardPage() {
     );
   }
 
-  const managers = managersQuery.data ?? [];
   const technicians = techniciansQuery.data ?? [];
   const quotes = unscheduledQuotesQuery.data ?? [];
 
-  // If the active role is a manager, pre-fill the form's manager field with
-  // that id. If the active role is a technician (they're viewing the manager
-  // page anyway), leave it unset.
-  const initialManagerId =
-    current.role === "manager" ? current.id : undefined;
+  // managerId for the assignment is implied by the viewing role. A technician
+  // viewing the manager page falls back to the first available manager so the
+  // demo's no-auth flow still works for them.
+  const managers = managersQuery.data ?? [];
+  const managerId =
+    current.role === "manager" ? current.id : (managers[0]?.id ?? 0);
 
   return (
     <Stack spacing={4}>
       <Box>
         <Typography
-          variant="overline"
-          sx={{
-            display: "block",
-            color: "secondary.main",
-            mb: 1.5,
-            fontFamily: "var(--font-mono)",
-            letterSpacing: "0.22em",
-          }}
-        >
-          Manager · Dispatch
-        </Typography>
-        <Typography
           component="h1"
-          variant="h4"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
+            fontSize: { xs: "1.75rem", sm: "2rem" },
+            lineHeight: 1.2,
+            letterSpacing: "-0.01em",
             mb: 1.5,
             color: "text.primary",
           }}
         >
           New job assignment
         </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 640 }}>
+        <Typography variant="body1" sx={{ color: "text.secondary" }}>
           Allocate an unscheduled quote to a technician on a fixed two-hour
           slot. Conflicts on the same technician, date and slot are rejected
           at the database level.
@@ -192,59 +182,27 @@ export default function ManagerDashboardPage() {
         sx={{
           p: { xs: 3, sm: 4 },
           borderColor: "divider",
-          position: "relative",
-          // Left-edge accent stripe in primary teal — work-order document
-          // motif. Echoes the home page card and the scheduled-slot rows.
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: 0,
-            width: 3,
-            bgcolor: "primary.main",
-            borderTopLeftRadius: "inherit",
-            borderBottomLeftRadius: "inherit",
-          },
         }}
       >
-        <Stack
-          direction="row"
-          spacing={1.5}
-          alignItems="baseline"
-          sx={{ mb: 3, pb: 1.5, borderBottom: 1, borderColor: "divider" }}
+        <Typography
+          component="h2"
+          sx={{
+            fontWeight: 600,
+            fontSize: "1.05rem",
+            letterSpacing: "-0.005em",
+            color: "text.primary",
+            mb: 3,
+            pb: 1.5,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
         >
-          <Typography
-            component="h2"
-            variant="h6"
-            sx={{
-              fontWeight: 600,
-              fontSize: "1.05rem",
-              letterSpacing: "-0.005em",
-              color: "text.primary",
-            }}
-          >
-            Work order draft
-          </Typography>
-          <Typography
-            component="span"
-            sx={{
-              ml: "auto",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.62rem",
-              fontWeight: 600,
-              color: "text.disabled",
-              letterSpacing: "0.14em",
-            }}
-          >
-            WO-{String(initialManagerId ?? 0).padStart(3, "0")}
-          </Typography>
-        </Stack>
+          Work order draft
+        </Typography>
         <AssignJobForm
-          managers={managers}
           technicians={technicians}
           quotes={quotes}
-          initialManagerId={initialManagerId}
+          managerId={managerId}
           submitting={mutation.isPending}
           lastError={submitError}
           onSubmit={(input) => mutation.mutate(input)}

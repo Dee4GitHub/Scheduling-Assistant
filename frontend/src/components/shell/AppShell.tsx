@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AppBar, Box, Container, Stack, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
 import { RoleStrip } from "@/components/role/RoleStrip";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
@@ -46,34 +46,18 @@ export function AppShell({ children }: { readonly children: React.ReactNode }) {
               "&:hover": { opacity: 0.85 },
             }}
           >
-            <Stack spacing={0}>
-              <Typography
-                component="span"
-                sx={{
-                  fontWeight: 700,
-                  fontSize: { xs: "0.95rem", sm: "1.05rem" },
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  color: "#FFFFFF",
-                  lineHeight: 1.2,
-                }}
-              >
-                Scheduling Assistant
-              </Typography>
-              <Typography
-                component="span"
-                sx={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.65rem",
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.55)",
-                  lineHeight: 1.2,
-                }}
-              >
-                Trades Ops · v0.1
-              </Typography>
-            </Stack>
+            <Typography
+              component="span"
+              sx={{
+                fontWeight: 600,
+                fontSize: { xs: "1rem", sm: "1.1rem" },
+                letterSpacing: "-0.005em",
+                color: "#FFFFFF",
+                lineHeight: 1.2,
+              }}
+            >
+              Scheduling Assistant
+            </Typography>
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />

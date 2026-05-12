@@ -357,10 +357,10 @@ function SlotLabel({ slot, muted }: { readonly slot: Slot; readonly muted: boole
   return (
     <Box
       sx={{
-        minWidth: { xs: "auto", sm: 132 },
+        minWidth: { xs: "auto", sm: 180 },
         flexShrink: 0,
         py: 0.25,
-        pr: 1,
+        pr: 1.5,
         borderRight: { xs: 0, sm: 1 },
         borderColor: "divider",
       }}
@@ -369,26 +369,22 @@ function SlotLabel({ slot, muted }: { readonly slot: Slot; readonly muted: boole
         component="div"
         sx={{
           fontFamily: "var(--font-mono)",
-          fontSize: { xs: "1rem", sm: "1.05rem" },
+          fontSize: { xs: "0.85rem", sm: "0.9rem" },
           fontWeight: 600,
           color: muted ? "text.secondary" : "text.primary",
           letterSpacing: "0.02em",
-          lineHeight: 1.15,
+          lineHeight: 1.25,
+          whiteSpace: "nowrap",
         }}
       >
         {formatTime(startRaw)}
-      </Typography>
-      <Typography
-        component="div"
-        sx={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.72rem",
-          color: "text.disabled",
-          letterSpacing: "0.05em",
-          lineHeight: 1.15,
-        }}
-      >
-        — {formatTime(endRaw)}
+        <Box
+          component="span"
+          sx={{ mx: 0.5, color: "text.disabled", fontWeight: 400 }}
+        >
+          to
+        </Box>
+        {formatTime(endRaw)}
       </Typography>
     </Box>
   );

@@ -21,7 +21,6 @@ import { format, parseISO } from "date-fns";
 import { enAU } from "date-fns/locale";
 import type {
   AssignJobInput,
-  Manager,
   Quote,
   Slot,
   Technician,
@@ -40,10 +39,9 @@ import { ApiError } from "@/lib/api";
 // AssignJobInputSchema regex.
 
 interface AssignJobFormProps {
-  readonly managers: readonly Manager[];
   readonly technicians: readonly Technician[];
   readonly quotes: readonly Quote[];
-  readonly initialManagerId?: number;
+  readonly managerId: number;
   readonly submitting: boolean;
   readonly lastError: ApiError | null;
   onSubmit(input: AssignJobInput): void;
@@ -55,7 +53,6 @@ type DraftSlot = Slot | "";
 interface Draft {
   technicianId: DraftId;
   quoteId: DraftId;
-  managerId: DraftId;
   scheduledDate: Date | null;
   slot: DraftSlot;
 }
@@ -63,30 +60,19 @@ interface Draft {
 const EMPTY_DRAFT: Draft = {
   technicianId: "",
   quoteId: "",
-  managerId: "",
   scheduledDate: null,
   slot: "",
 };
 
 export function AssignJobForm({
-  managers,
   technicians,
   quotes,
-  initialManagerId,
+  managerId,
   submitting,
   lastError,
   onSubmit,
 }: AssignJobFormProps) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-
-  // Pre-fill managerId from the role context when the form mounts (or when
-  // it changes — e.g. user picked a different manager via the header). Other
-  // fields stay empty so the user makes a conscious choice per assignment.
-  useEffect(() => {
-    if (initialManagerId !== undefined) {
-      setDraft((prev) => ({ ...prev, managerId: initialManagerId }));
-    }
-  }, [initialManagerId]);
 
   // Stale-id guard: when the parent refetches `quotes` after a successful
   // assignment, the just-assigned quote disappears from the available list.
@@ -112,7 +98,7 @@ export function AssignJobForm({
   }, [draft.quoteId, effectiveQuoteId]);
 
   const updateIdField =
-    (key: "technicianId" | "quoteId" | "managerId") =>
+    (key: "technicianId" | "quoteId") =>
     (e: SelectChangeEvent<DraftId>) => {
       const raw = e.target.value;
       setDraft((prev) => ({
@@ -136,21 +122,16 @@ export function AssignJobForm({
   const isComplete =
     draft.technicianId !== "" &&
     effectiveQuoteId !== "" &&
-    draft.managerId !== "" &&
     draft.scheduledDate !== null &&
     draft.slot !== "";
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isComplete || submitting) return;
-    // TS narrowing: isComplete guarantees no field is empty/null, but the
-    // checker doesn't know that from a single boolean. We assert at the
-    // payload boundary rather than sprinkling non-null assertions through
-    // the body.
     const payload: AssignJobInput = {
       technicianId: draft.technicianId as number,
       quoteId: effectiveQuoteId as number,
-      managerId: draft.managerId as number,
+      managerId,
       scheduledDate: format(draft.scheduledDate as Date, "yyyy-MM-dd"),
       slot: draft.slot as Slot,
     };
@@ -158,10 +139,7 @@ export function AssignJobForm({
   };
 
   const handleReset = () => {
-    setDraft({
-      ...EMPTY_DRAFT,
-      managerId: initialManagerId ?? "",
-    });
+    setDraft(EMPTY_DRAFT);
   };
 
   // Map ApiError.code to inline form-level error UI. Distinct codes get distinct
@@ -174,7 +152,7 @@ export function AssignJobForm({
       <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate>
         {errorAlert}
 
-        <FieldBlock tag="A" label="Technician" labelId="technician-label">
+        <FieldBlock label="Technician" labelId="technician-label">
           <FormControl fullWidth>
             <Select<DraftId>
               id="technician"
@@ -216,7 +194,6 @@ export function AssignJobForm({
         </FieldBlock>
 
         <FieldBlock
-          tag="B"
           label="Quote"
           labelId="quote-label"
           hint={quotes.length === 0 ? "All quotes scheduled" : undefined}
@@ -272,34 +249,8 @@ export function AssignJobForm({
           </FormControl>
         </FieldBlock>
 
-        <FieldBlock tag="C" label="Assigned by" labelId="manager-label">
-          <FormControl fullWidth>
-            <Select<DraftId>
-              id="manager"
-              value={draft.managerId}
-              displayEmpty
-              renderValue={(value) =>
-                value === "" ? (
-                  <PlaceholderText>Select a manager</PlaceholderText>
-                ) : (
-                  renderManagerOption(value, managers)
-                )
-              }
-              onChange={updateIdField("managerId")}
-              inputProps={{ name: "managerId", "aria-labelledby": "manager-label" }}
-              disabled={submitting}
-            >
-              {managers.map((m) => (
-                <MenuItem key={m.id} value={m.id}>
-                  {m.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </FieldBlock>
-
         <Box sx={{ display: "flex", gap: 3, flexDirection: { xs: "column", sm: "row" } }}>
-          <FieldBlock tag="D" label="Scheduled date" labelId="date-label" sx={{ flex: 1 }}>
+          <FieldBlock label="Scheduled date" labelId="date-label" sx={{ flex: 1 }}>
             <DatePicker
               value={draft.scheduledDate}
               onChange={updateDate}
@@ -322,7 +273,7 @@ export function AssignJobForm({
             />
           </FieldBlock>
 
-          <FieldBlock tag="E" label="Time slot" labelId="slot-label" sx={{ flex: 1 }}>
+          <FieldBlock label="Time slot" labelId="slot-label" sx={{ flex: 1 }}>
             <FormControl fullWidth>
               <Select<DraftSlot>
                 id="slot"
@@ -387,7 +338,6 @@ export function AssignJobForm({
           <Button
             type="submit"
             variant="contained"
-            size="large"
             disabled={!isComplete || submitting}
             startIcon={
               submitting ? (
@@ -486,22 +436,18 @@ function describeError(err: ApiError): {
 // without importing date-fns directly (keeps the dependency narrow to here).
 export { parseISO };
 
-// Tabular field block: tag letter ("A", "B"...) + UPPERCASE label + optional
-// hint + the actual input. The tag letters turn the form into a sequential
-// document. Same vocabulary as the home page RolePicker.
-//
-// The overline label gets an id so the matching Select can reference it via
-// aria-labelledby — preserves screen-reader accessibility after we removed
-// the inline MUI InputLabel (which used to double-label the field).
+// Field block: label + optional right-aligned hint + the actual input.
+// The label gets an id so the wrapped Select can reference it via
+// aria-labelledby — preserves screen-reader accessibility after we
+// removed the inline MUI InputLabel (which used to double-label the
+// field).
 function FieldBlock({
-  tag,
   label,
   labelId,
   hint,
   children,
   sx,
 }: {
-  readonly tag: string;
   readonly label: string;
   readonly labelId?: string;
   readonly hint?: string;
@@ -510,33 +456,13 @@ function FieldBlock({
 }) {
   return (
     <Box sx={sx}>
-      <Stack direction="row" spacing={1.25} alignItems="baseline" sx={{ mb: 1.25 }}>
-        <Typography
-          component="span"
-          sx={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.6rem",
-            fontWeight: 600,
-            color: "text.disabled",
-            letterSpacing: "0.14em",
-            // Fixed-width gutter so labels align left across rows.
-            width: 14,
-            flexShrink: 0,
-          }}
-        >
-          {tag}
-        </Typography>
+      <Stack direction="row" spacing={1.5} alignItems="baseline" sx={{ mb: 1 }}>
         <Typography
           id={labelId}
           component="span"
           sx={{
-            // Custom field-label tier: bigger than overline (0.7rem) so it
-            // dominates the placeholder text inside the Select; smaller than
-            // h6 (1rem) so it stays a field label, not a section header.
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
+            fontSize: "0.95rem",
+            fontWeight: 600,
             color: "text.primary",
             lineHeight: 1.4,
           }}
@@ -561,15 +487,7 @@ function FieldBlock({
 // The colour matches MUI's text.disabled so it reads as a hint, not as data.
 function PlaceholderText({ children }: { readonly children: React.ReactNode }) {
   return (
-    <Typography
-      component="span"
-      sx={{
-        color: "text.disabled",
-        fontWeight: 400,
-        fontSize: "0.92rem",
-        fontStyle: "italic",
-      }}
-    >
+    <Typography component="span" sx={{ color: "text.disabled" }}>
       {children}
     </Typography>
   );
@@ -640,11 +558,3 @@ function renderQuoteOption(
   );
 }
 
-function renderManagerOption(
-  value: DraftId,
-  managers: readonly Manager[],
-): React.ReactNode {
-  const m = managers.find((x) => x.id === value);
-  if (!m) return null;
-  return <Typography component="span">{m.name}</Typography>;
-}

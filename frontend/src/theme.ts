@@ -140,11 +140,11 @@ export const theme = createTheme({
           paddingRight: 14,
         },
         sizeLarge: {
-          paddingTop: 12,
-          paddingBottom: 12,
-          paddingLeft: 28,
-          paddingRight: 28,
-          fontSize: "0.95rem",
+          paddingTop: 10,
+          paddingBottom: 10,
+          paddingLeft: 22,
+          paddingRight: 22,
+          fontSize: "0.875rem",
         },
         containedPrimary: {
           backgroundColor: ACCENT_MAIN,
@@ -194,6 +194,7 @@ export const theme = createTheme({
         root: {
           borderRadius: 6,
           backgroundColor: PAPER_WARM,
+          fontSize: "0.9rem",
           "& .MuiOutlinedInput-notchedOutline": {
             borderColor: RULE_HAIRLINE,
           },
@@ -203,6 +204,18 @@ export const theme = createTheme({
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderWidth: 1.5,
           },
+        },
+        input: {
+          fontSize: "0.9rem",
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          fontWeight: 500,
+          minHeight: 40,
+          fontSize: "0.9rem",
         },
       },
     },
@@ -231,14 +244,6 @@ export const theme = createTheme({
         root: {
           borderRadius: 6,
           fontWeight: 500,
-        },
-      },
-    },
-    MuiMenuItem: {
-      styleOverrides: {
-        root: {
-          fontWeight: 500,
-          minHeight: 40,
         },
       },
     },

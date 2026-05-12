@@ -127,7 +127,7 @@ export function RolePicker() {
 
   return (
     <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate>
-      <FieldBlock label="Role" labelId="role-label" tag="01">
+      <FieldBlock label="Role" labelId="role-label">
         <FormControl fullWidth size="medium">
           <Select<DraftRole>
             id="role"
@@ -135,15 +135,7 @@ export function RolePicker() {
             displayEmpty
             renderValue={(value) =>
               value === "" ? (
-                <Typography
-                  component="span"
-                  sx={{
-                    color: "text.disabled",
-                    fontWeight: 400,
-                    fontSize: "0.92rem",
-                    fontStyle: "italic",
-                  }}
-                >
+                <Typography component="span" sx={{ color: "text.disabled" }}>
                   Manager or Technician?
                 </Typography>
               ) : value === "manager" ? (
@@ -164,7 +156,6 @@ export function RolePicker() {
       <FieldBlock
         label={role === "manager" ? "Manager" : role === "technician" ? "Technician" : "User"}
         labelId="user-label"
-        tag="02"
         hint={role === "" ? "Pick a role first" : undefined}
       >
         <FormControl fullWidth disabled={role === ""} size="medium">
@@ -174,15 +165,7 @@ export function RolePicker() {
             displayEmpty
             renderValue={(value) =>
               value === "" ? (
-                <Typography
-                  component="span"
-                  sx={{
-                    color: "text.disabled",
-                    fontWeight: 400,
-                    fontSize: "0.92rem",
-                    fontStyle: "italic",
-                  }}
-                >
+                <Typography component="span" sx={{ color: "text.disabled" }}>
                   {role === ""
                     ? "Pick a role first"
                     : role === "manager"
@@ -214,7 +197,6 @@ export function RolePicker() {
         <Button
           type="submit"
           variant="contained"
-          size="large"
           disabled={!isComplete}
           endIcon={<ArrowForwardIcon />}
         >
@@ -233,41 +215,23 @@ export function RolePicker() {
 function FieldBlock({
   label,
   labelId,
-  tag,
   hint,
   children,
 }: {
   readonly label: string;
   readonly labelId: string;
-  readonly tag: string;
   readonly hint?: string;
   readonly children: React.ReactNode;
 }) {
   return (
     <Box>
-      <Stack direction="row" spacing={1.25} alignItems="baseline" sx={{ mb: 1.25 }}>
-        <Typography
-          component="span"
-          sx={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.6rem",
-            fontWeight: 600,
-            color: "text.disabled",
-            letterSpacing: "0.12em",
-            width: 18,
-            flexShrink: 0,
-          }}
-        >
-          {tag}
-        </Typography>
+      <Stack direction="row" spacing={1.5} alignItems="baseline" sx={{ mb: 1 }}>
         <Typography
           id={labelId}
           component="span"
           sx={{
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
+            fontSize: "0.95rem",
+            fontWeight: 600,
             color: "text.primary",
             lineHeight: 1.4,
           }}

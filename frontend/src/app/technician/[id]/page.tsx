@@ -158,41 +158,33 @@ export default function TechnicianSchedulePage() {
       <Stack spacing={4}>
         <Box>
           <Typography
-            variant="overline"
-            sx={{
-              display: "block",
-              color: "secondary.main",
-              mb: 1.5,
-              fontFamily: "var(--font-mono)",
-              letterSpacing: "0.22em",
-            }}
-          >
-            {canComplete ? "Technician · My Schedule" : "Technician · Read-only View"}
-          </Typography>
-          <Typography
             component="h1"
-            variant="h4"
-            sx={{ fontWeight: 700, mb: 1.5, color: "text.primary" }}
+            sx={{
+              fontWeight: 600,
+              fontSize: { xs: "1.75rem", sm: "2rem" },
+              lineHeight: 1.2,
+              letterSpacing: "-0.01em",
+              mb: 1.5,
+              color: "text.primary",
+            }}
           >
             {technician ? technician.name : `Technician #${technicianId}`}
             {technician ? (
               <Typography
                 component="span"
                 sx={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.95rem",
+                  fontSize: "1rem",
                   fontWeight: 500,
                   color: "text.secondary",
                   ml: 1.5,
-                  letterSpacing: "0.04em",
                   verticalAlign: "middle",
                 }}
               >
-                {technician.trade.toUpperCase()}
+                {technician.trade}
               </Typography>
             ) : null}
           </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 640 }}>
+          <Typography variant="body1" sx={{ color: "text.secondary" }}>
             {canComplete
               ? "Four two-hour slots per day. Click Mark complete when a job is done; the assigning manager is notified."
               : "Four two-hour slots per day. Only the assigned technician can mark a job complete."}
@@ -204,18 +196,6 @@ export default function TechnicianSchedulePage() {
           sx={{
             p: { xs: 2.5, sm: 3.5 },
             borderColor: "divider",
-            position: "relative",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: 3,
-              bgcolor: "primary.main",
-              borderTopLeftRadius: "inherit",
-              borderBottomLeftRadius: "inherit",
-            },
           }}
         >
           <Stack
@@ -231,12 +211,10 @@ export default function TechnicianSchedulePage() {
                 id="schedule-date-label"
                 sx={{
                   display: "block",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
                   color: "text.primary",
-                  mb: 0.75,
+                  mb: 1,
                 }}
               >
                 Date
