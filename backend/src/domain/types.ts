@@ -84,11 +84,24 @@ export type Job = z.infer<typeof JobSchema>;
 
 // Input to assignJob — the domain helper. Routes parse the HTTP body with
 // AssignJobRequestSchema (below) and pass the result through.
+//
+// scheduledDate is rejected if it falls before today (UTC). Stored dates can
+// be in the past (a job assigned yesterday and completed today is valid
+// history), but a NEW assignment to a past date is a user error worth catching
+// at the boundary rather than letting it through to the DB. Comparing the
+// raw YYYY-MM-DD string against today's UTC date keeps the check timezone-
+// independent — we never coerce to a Date object that drifts with local TZ.
 export const AssignJobInputSchema = z.object({
   technicianId: z.number().int().positive(),
   quoteId: z.number().int().positive(),
   managerId: z.number().int().positive(),
-  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
+  scheduledDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD")
+    .refine(
+      (d) => d >= new Date().toISOString().slice(0, 10),
+      "scheduledDate must be today or later",
+    ),
   slot: SlotEnum,
 });
 export type AssignJobInput = z.infer<typeof AssignJobInputSchema>;

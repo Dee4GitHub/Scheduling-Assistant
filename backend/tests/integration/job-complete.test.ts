@@ -10,6 +10,7 @@ import type { AssignJobInput, Job } from "../../src/domain/types.js";
 import {
   type CountRow,
   type Fixtures,
+  futureDate,
   makeFixtures,
   makeTestPool,
   uniqueNamespace,
@@ -73,7 +74,7 @@ describe("completeJob — lifecycle + authorisation (integration)", () => {
 
   it("flips a scheduled job to completed and inserts a manager-recipient notification", async () => {
     const f = requireFx();
-    const job = await assignFreshJob(f, 0, "2026-07-01", "09:00-11:00");
+    const job = await assignFreshJob(f, 0, futureDate(60), "09:00-11:00");
 
     const result = await completeJob(pool, job.id, f.technicianId);
 
@@ -103,7 +104,7 @@ describe("completeJob — lifecycle + authorisation (integration)", () => {
 
   it("throws WrongTechnicianError (→403) when the actor isn't the assigned technician", async () => {
     const f = requireFx();
-    const job = await assignFreshJob(f, 0, "2026-07-02", "09:00-11:00");
+    const job = await assignFreshJob(f, 0, futureDate(61), "09:00-11:00");
     const otherTechnicianId = f.technicianId + 999_999;
 
     await expect(completeJob(pool, job.id, otherTechnicianId))
@@ -130,7 +131,7 @@ describe("completeJob — lifecycle + authorisation (integration)", () => {
 
   it("throws JobAlreadyCompletedError (→409) on a second completion attempt", async () => {
     const f = requireFx();
-    const job = await assignFreshJob(f, 0, "2026-07-03", "09:00-11:00");
+    const job = await assignFreshJob(f, 0, futureDate(62), "09:00-11:00");
     await completeJob(pool, job.id, f.technicianId);
 
     await expect(completeJob(pool, job.id, f.technicianId))
