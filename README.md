@@ -166,7 +166,7 @@ DB-backed simulator. The brief said "can be simulated (DB or logs)" — I picked
 
 The brief didn't specify these. I made calls and documented them up front:
 
-- **Date scope:** jobs can be scheduled on any future date, not just today. Manager picks technician, date, slot.
+- **Date scope:** jobs can be scheduled for today or any future date. Past dates are rejected at the API boundary with a 400. Manager picks technician, date, slot.
 - **Quote model:** minimal — id, reference, summary, status. A real product would have customer details, line items, totals; out of scope.
 - **Seed dataset:** 5 managers, 5 technicians, 10 unscheduled quotes. Enough to demo the flow without overwhelming the reviewer. Seed runs idempotently on backend startup.
 - **Notification UX:** bell icon in the AppBar with a red unread badge that clears as items are viewed.

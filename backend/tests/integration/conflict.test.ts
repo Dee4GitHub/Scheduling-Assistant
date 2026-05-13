@@ -11,6 +11,7 @@ import {
   type CountRow,
   type Fixtures,
   type QuoteStatusRow,
+  futureDate,
   makeFixtures,
   makeTestPool,
   uniqueNamespace,
@@ -65,7 +66,7 @@ describe("assignJob — conflict prevention (integration)", () => {
     const base: Omit<AssignJobInput, "quoteId"> = {
       technicianId: f.technicianId,
       managerId: f.managerId,
-      scheduledDate: "2026-06-01",
+      scheduledDate: futureDate(30),
       slot: "09:00-11:00",
     };
 
@@ -105,7 +106,7 @@ describe("assignJob — conflict prevention (integration)", () => {
       technicianId: f.technicianId,
       quoteId: q0,
       managerId: f.managerId,
-      scheduledDate: "2026-06-02",
+      scheduledDate: futureDate(31),
       slot: "09:00-11:00",
     });
 
@@ -116,7 +117,7 @@ describe("assignJob — conflict prevention (integration)", () => {
         technicianId: f.technicianId,
         quoteId: q0,
         managerId: f.managerId,
-        scheduledDate: "2026-06-03",
+        scheduledDate: futureDate(32),
         slot: "11:00-13:00",
       }),
     ).rejects.toBeInstanceOf(QuoteAlreadyScheduledError);
@@ -130,7 +131,7 @@ describe("assignJob — conflict prevention (integration)", () => {
         technicianId: 9_999_999,
         quoteId: q0,
         managerId: f.managerId,
-        scheduledDate: "2026-06-04",
+        scheduledDate: futureDate(33),
         slot: "09:00-11:00",
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
@@ -140,23 +141,25 @@ describe("assignJob — conflict prevention (integration)", () => {
     const f = requireFx();
     const [q0, q1] = takeTwo(f.quoteIds);
 
+    const rollbackDate = futureDate(34);
     const job1 = await assignJob(pool, {
       technicianId: f.technicianId,
       quoteId: q0,
       managerId: f.managerId,
-      scheduledDate: "2026-06-05",
+      scheduledDate: rollbackDate,
       slot: "09:00-11:00",
     });
 
     // Second call collides on uniq_tech_date_slot. The whole transaction
     // must roll back — quote q1 stays 'unscheduled', no notification was
-    // created for it, no second jobs row.
+    // created for it, no second jobs row. Both calls use the same date so
+    // the UNIQUE collision is the assertion under test.
     await expect(
       assignJob(pool, {
         technicianId: f.technicianId,
         quoteId: q1,
         managerId: f.managerId,
-        scheduledDate: "2026-06-05",
+        scheduledDate: rollbackDate,
         slot: "09:00-11:00",
       }),
     ).rejects.toBeInstanceOf(TimeSlotConflictError);

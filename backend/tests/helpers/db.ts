@@ -34,6 +34,16 @@ export function uniqueNamespace(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// YYYY-MM-DD string for today (UTC) plus offsetDays. Used by tests that need
+// a guaranteed-future scheduledDate, so the suite stays valid as time advances
+// past any hard-coded date. UTC matches the boundary check in
+// AssignJobInputSchema; both sides agree on the same notion of "today".
+export function futureDate(offsetDays: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
 // quotes.reference is VARCHAR(20). The full namespace blows past that, so for
 // references we use a short token (timestamp tail + 4 base36 chars). The
 // risk of two parallel test runs picking the same token is negligible for a

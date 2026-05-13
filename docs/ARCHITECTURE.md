@@ -193,7 +193,7 @@ Eight endpoints. Full interactive docs at `http://localhost:4000/docs` (Swagger 
 | GET | `/api/managers` | List all managers | — |
 | GET | `/api/technicians` | List all technicians | — |
 | GET | `/api/quotes?status=...` | List quotes (filterable by status) | — |
-| POST | `/api/jobs` | Assign a quote to a technician on a slot | 400 validation, 404 not found, 409 conflict, 409 quote-already-scheduled |
+| POST | `/api/jobs` | Assign a quote to a technician on a slot | 400 validation (including past `scheduledDate`), 404 not found, 409 conflict, 409 quote-already-scheduled |
 | POST | `/api/jobs/:id/complete` | Mark job complete (technician only) | 403 wrong technician, 404 not found, 409 already completed |
 | GET | `/api/technicians/:id/schedule?date=...` | A technician's schedule for a date | 404 if technician not found |
 | GET | `/api/notifications?recipientType=...&recipientId=...&unreadOnly=...` | Notifications for a recipient | — |
