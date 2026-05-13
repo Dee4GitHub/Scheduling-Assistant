@@ -39,10 +39,13 @@ Tear down: `docker compose down -v` (the `-v` drops the seed data; omit to keep 
 Requires Node 22+ on the host.
 
 ```bash
+cp .env.example .env            # backend reads DB creds from here
 docker compose up -d mysql      # MySQL only
 cd backend && npm install && npm run dev
 cd frontend && npm install && npm run dev
 ```
+
+Backend reads `.env` via dotenv on startup; `DB_USER`, `DB_PASSWORD`, and `DB_DATABASE` are required (no defaults). The frontend doesn't need an env file in dev: `NEXT_PUBLIC_API_BASE_URL` defaults to `http://localhost:4000`.
 
 ### Tests
 
